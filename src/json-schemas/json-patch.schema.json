@@ -1,0 +1,13 @@
+{
+  "$id": "https://schemas.mattihiltunen.com/apiserver/json-patch",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "op": { "type": "string" },
+      "path": { "type": "string" },
+      "value": { "type": "string" },
+      "from": { "type": "string" }
+    }
+  }
+}
