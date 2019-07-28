@@ -1,6 +1,6 @@
 import express = require('express');
-import { IStoreConstructor, IStore } from './store';
-import { IDependencies } from './dependencies';
+import { IStore } from './store';
+import { IDependencies, ControllerFactory, IController } from './types';
 
 export const resourceNamePattern = /^[a-z\-]+$/i
 
@@ -21,10 +21,15 @@ export interface IResourceDefinition {
    * Function which create's this resource's main data store. The default generated CRUD API will
    * use this store.
    */
-  store?: IStoreConstructor;
+  getStore?: (dependencies: IDependencies) => IStore;
+
+  store?: IStore;
 
   /** Function which creates the resource's JSON API router. */
   getRoutes?: (dependencies: IDependencies, router: express.Router) => void;
+
+  /** Function which creates the resource's controller. */
+  getController?: ControllerFactory;
 
   /** Schema objects to add to the API's JSON schema validator. */
   jsonSchemas?: object[];

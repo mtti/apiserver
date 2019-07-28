@@ -6,11 +6,10 @@ import { ContractViolationError, RequestBodyValidationError } from './errors';
 import { errorHandler, notFoundHandler } from './error-handler';
 import { all as jsonSchemas } from './json-schemas';
 import { IResourceDefinition, resourceNamePattern } from './resource';
-import { IDependencies } from './dependencies';
-import { IStore } from './store';
-import { createDefaultApi, IDefaultApiOptions } from './default-api';
+import { IDependencies } from './types';
+import { initializeController } from './controller';
 
-const RESOURCE_FILE_TYPES = [ 'routes', 'store' ];
+const RESOURCE_FILE_TYPES = [ 'routes', 'store', 'controller' ];
 
 export class ApiServer {
   private _router?: express.Router;
@@ -106,7 +105,17 @@ export class ApiServer {
         }
         resource.getRoutes = getRoutes;
       } else if (file.type == 'store') {
-        resource.store = require(file.path);
+        const { getStore } = require(file.path);
+        if (typeof getStore !== 'function') {
+          throw new Error(`getStore in ${file.path} is not a function`);
+        }
+        resource.getStore = getStore;
+      } else if (file.type === 'controller') {
+        const { getController } = require(file.path);
+        if (typeof getController !== 'function') {
+          throw new Error(`getController in ${file.path} is not a function`);
+        }
+        resource.getController = getController;
       }
     }
 
@@ -133,29 +142,27 @@ export class ApiServer {
         this.addSchema(resource.jsonSchemas);
       }
 
-      if (resource.store) {
-        const store = new resource.store(newDependencies);
-        const dependencyName = store.dependencyName || `${resource.name}Store`;
-        newDependencies[dependencyName] = store;
+      if (resource.getStore) {
+        resource.store = resource.getStore(newDependencies);
+        const dependencyName = resource.store.dependencyName || `${resource.name}Store`;
+        newDependencies[dependencyName] = resource.store;
       }
     }
 
-    // Get routes
     this._router = express.Router();
-    for (let resource of this._resources) {
-      if (!resource.getRoutes) {
-        continue;
-      }
 
-      const router = express.Router();
-      resource.getRoutes(newDependencies, router);
+    // Initialize controllers
+    for (let resource of this._resources) {
+      const router = initializeController(resource, newDependencies);
 
       let slug = `${resource.name}s`;
       if (resource.slug) {
         slug = resource.slug;
       }
+
       this._router.use(`/${slug}`, router);
     }
+
     this._router.use(notFoundHandler);
     this._router.use(errorHandler);
 
@@ -168,10 +175,6 @@ export class ApiServer {
    */
   public addSchema(schema: object|object[]) {
     this._ajv.addSchema(schema);
-  }
-
-  public createDefaultApi(router: express.Router, store: IStore, contract?: string, options: IDefaultApiOptions = {}) {
-    createDefaultApi({server:this, store, router, contract, options });
   }
 
   /**
