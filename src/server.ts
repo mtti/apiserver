@@ -1,19 +1,15 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import Ajv = require('Ajv');
 import express = require('express');
-import { ContractViolationError, RequestBodyValidationError } from './errors';
 import { errorHandler, notFoundHandler } from './error-handler';
-import { all as jsonSchemas } from './json-schemas';
 import { IResourceDefinition, resourceNamePattern } from './resource';
 import { IDependencies } from './types';
 import { initializeController } from './controller';
-
-const RESOURCE_FILE_TYPES = [ 'routes', 'store', 'controller' ];
+import { Validator } from './validator';
 
 export class ApiServer {
+  private _validator: Validator;
   private _router?: express.Router;
-  private _ajv: Ajv.Ajv;
   private _resources: IResourceDefinition[] = [];
   private _initialized: boolean = false;
 
@@ -29,8 +25,7 @@ export class ApiServer {
   }
 
   constructor() {
-    this._ajv = new Ajv();
-    this._ajv.addSchema(jsonSchemas);
+    this._validator = new Validator();
   }
 
   /**
@@ -84,12 +79,16 @@ export class ApiServer {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
 
-    const newDependencies:IDependencies = { ...dependencies, apiServer: this };
+    const newDependencies:IDependencies = {
+      ...dependencies,
+      apiServer: this,
+      validator: this._validator
+    };
 
     // Initialize resources
     for (let resource of this._resources) {
       if (resource.jsonSchemas) {
-        this.addSchema(resource.jsonSchemas);
+        this._validator.addSchema(resource.jsonSchemas);
       }
 
       if (resource.getStore) {
@@ -105,11 +104,14 @@ export class ApiServer {
     for (let resource of this._resources) {
       const router = initializeController(resource, newDependencies);
 
+      if (resource.getRoutes) {
+        resource.getRoutes(newDependencies, router);
+      }
+
       let slug = `${resource.name}s`;
       if (resource.slug) {
         slug = resource.slug;
       }
-
       this._router.use(`/${slug}`, router);
     }
 
@@ -117,62 +119,5 @@ export class ApiServer {
     this._router.use(errorHandler);
 
     return newDependencies;
-  }
-
-  /**
-   * Adds a schema to the underlying JSON schema validator.
-   * @param schema Schema or an array of schemas.
-   */
-  public addSchema(schema: object|object[]) {
-    this._ajv.addSchema(schema);
-  }
-
-  /**
-   * Throw a `RequestBodyValidationError` if an object doesn't match a JSON schema.
-   *
-   * @param schema Name of JSON schema to validate against.
-   * @param data Request body.
-   * @returns The `data` argument.
-   */
-  public assertRequestBody<T>(schema: string, data: any): T {
-    const [valid, errors] = this.validateSchema(schema, data);
-    if (valid) {
-      return data as T;
-    }
-    throw new RequestBodyValidationError(errors || [], 'Invalid request body');
-  }
-
-  /**
-   * Validate a JSON response against a contract, throwing `ContractViolationError` on failure.
-   *
-   * @param schema Name of JSON schema to validate agains.
-   * @param data Response body.
-   * @returns The `data` argument.
-   */
-  public assertResponse(schema: string, data: any): any {
-    const [valid, errors] = this.validateSchema(schema, data);
-    if (valid) {
-      return data;
-    }
-    throw new ContractViolationError(errors || [], `Response body violates contract ${schema}`);
-  }
-
-  /**
-   * Validate an object against a JSON schema.
-   *
-   * @param schema Schema ref to validate against.
-   * @param data Object to validate.
-   * @returns An array with validation status and errors, if any.
-   */
-  public validateSchema(schema: string, data: any): [boolean, Ajv.ErrorObject[]|null] {
-    if (this._ajv.validate(schema, data)) {
-      return [true, null];
-    }
-
-    if (this._ajv.errors) {
-      return [false, [...this._ajv.errors]];
-    }
-
-    return [false, null];
   }
 }

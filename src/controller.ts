@@ -3,7 +3,6 @@ import { IResourceDefinition } from './resource';
 import { IStore } from './store';
 import { IDependencies, ControllerFactory, DefaultActionName } from './types';
 import { wrapHandler } from './handler';
-// import { bindGetAll, bindGetOne, bindCreate, bindReplace, bindPatch, bindDelete } from './crud';
 import { defaultActions } from './crud';
 
 export const getDefaultController: ControllerFactory = (dependencies: IDependencies) => ({});
