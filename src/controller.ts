@@ -24,6 +24,13 @@ export function initializeController(resource: IResourceDefinition, dependencies
 
   const router = express.Router();
 
+  // Bind collection actions first so they override /:id
+  if (controller.collectionActions) {
+    for (let [key, value] of Object.entries(controller.collectionActions)) {
+      router.post(`/${key}`, wrapHandler(value));
+    }
+  }
+
   // Bind routes for all enabled default actions
   const enabledDefaultActions = controller.defaultActions || ALL_DEFAULT_ACTIONS;
 
@@ -40,12 +47,6 @@ export function initializeController(resource: IResourceDefinition, dependencies
       }
     } else if (controller.defaultActions) {
       throw new Error(`${resource.name}: can't have default actions without a store`);
-    }
-  }
-
-  if (controller.collectionActions) {
-    for (let [key, value] of Object.entries(controller.collectionActions)) {
-      router.post(`/${key}`, wrapHandler(value));
     }
   }
 
