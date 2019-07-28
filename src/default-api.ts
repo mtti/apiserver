@@ -17,6 +17,12 @@ export interface IDefaultApiArguments {
   store: IStore,
 
   contract?: string,
+
+  options: IDefaultApiOptions
+}
+
+export interface IDefaultApiOptions {
+  methods?: string[],
 }
 
 /**
@@ -27,92 +33,109 @@ export interface IDefaultApiArguments {
  * @param schemaRef
  * @param router
  */
-export function createDefaultApi({ server, router, store, contract}: IDefaultApiArguments) {
+export function createDefaultApi({ server, router, store, contract, options}: IDefaultApiArguments) {
+  let { methods } = options;
+  if (!methods) {
+    methods = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+  }
+
   // List instances
-  router.get('/', wrapHandler(async (req, res) => {
-    const result = await store.find(req.query);
+  if (methods.includes('GET')) {
+    router.get('/', wrapHandler(async (req, res) => {
+      const result = await store.find(req.query);
 
-    if (contract) {
-      for (let instance of result) {
-        server.assertResponse(contract, instance);
+      if (contract) {
+        for (let instance of result) {
+          server.assertResponse(contract, instance);
+        }
       }
-    }
 
-    return result;
-  }));
+      return result;
+    }));
+  }
 
   // Create a new instance
-  router.post('/', jsonParser, wrapHandler(async (req, res) => {
-    let body: any;
-    if (contract) {
-      body = server.assertRequestBody<any>(contract, req.body);
-    } else {
-      body = req.body;
-    }
+  if (methods.includes('POST')) {
+    router.post('/', jsonParser, wrapHandler(async (req, res) => {
+      let body: any;
+      if (contract) {
+        body = server.assertRequestBody<any>(contract, req.body);
+      } else {
+        body = req.body;
+      }
 
-    const id = new Uuid();
-    const savedDocument = await store.create(id, body);
+      const id = new Uuid();
+      const savedDocument = await store.create(id, body);
 
-    if (contract) {
-      return server.assertResponse(contract, savedDocument);
-    }
-    return savedDocument;
-  }));
+      if (contract) {
+        return server.assertResponse(contract, savedDocument);
+      }
+      return savedDocument;
+    }));
+  }
 
   // Get an instance
-  router.get('/:id', wrapHandler(async (req, res) => {
-    const id = new Uuid(req.params.id);
-    const instance = await store.load(id);
+  if (methods.includes('GET')) {
+    router.get('/:id', wrapHandler(async (req, res) => {
+      const id = new Uuid(req.params.id);
+      const instance = await store.load(id);
 
-    if (instance === null) {
-      throw new NotFoundError();
-    }
+      if (instance === null) {
+        throw new NotFoundError();
+      }
 
-    if (contract) {
-      return server.assertResponse(contract, instance);
-    }
-    return instance;
-  }));
+      if (contract) {
+        return server.assertResponse(contract, instance);
+      }
+      return instance;
+    }));
+  }
 
   // Replace an instance
-  router.put('/:id', jsonParser, wrapHandler(async (req, res) => {
-    const id = new Uuid(req.params.id);
+  if (methods.includes('PUT')) {
+    router.put('/:id', jsonParser, wrapHandler(async (req, res) => {
+      const id = new Uuid(req.params.id);
 
-    let instance: any;
-    if (contract) {
-      instance = server.assertRequestBody<any>(contract, req.body);
-    } else {
-      instance = req.body;
-    }
+      let instance: any;
+      if (contract) {
+        instance = server.assertRequestBody<any>(contract, req.body);
+      } else {
+        instance = req.body;
+      }
 
-    store.replace(id, instance);
-  }));
+      store.replace(id, instance);
+    }));
+  }
 
   // Update instance with JSON Patch
-  router.patch('/:id', jsonParser, wrapHandler(async (req, res) => {
-    const id = new Uuid(req.params.id);
-    const patch = server.assertRequestBody<jsonPatch.Operation[]>(
-      'https://schemas.mattihiltunen.com/apiserver/json-patch',
-      req.body
-    );
+  if (methods.includes('PATCH')) {
+    router.patch('/:id', jsonParser, wrapHandler(async (req, res) => {
+      const id = new Uuid(req.params.id);
+      const patch = server.assertRequestBody<jsonPatch.Operation[]>(
+        'https://schemas.mattihiltunen.com/apiserver/json-patch',
+        req.body
+      );
 
-    const instance = await store.load(id);
-    if (instance === null) {
-      throw new NotFoundError();
-    }
+      const instance = await store.load(id);
+      if (instance === null) {
+        throw new NotFoundError();
+      }
 
-    const newInstance = jsonPatch.applyPatch(instance, patch).newDocument;
+      const newInstance = jsonPatch.applyPatch(instance, patch).newDocument;
 
-    if (contract) {
-      server.assertRequestBody<any>(contract, newInstance);
-    }
+      if (contract) {
+        server.assertRequestBody<any>(contract, newInstance);
+      }
 
-    await store.replace(id, newInstance);
-  }));
+      await store.replace(id, newInstance);
+    }));
+  }
 
   // Delete instance
-  router.delete('/:id', wrapHandler(async (req, res) => {
-    const id = new Uuid(req.params.id);
-    await store.delete(id);
-  }));
+  if (methods.includes('DELETE')) {
+    router.delete('/:id', wrapHandler(async (req, res) => {
+      const id = new Uuid(req.params.id);
+      await store.delete(id);
+    }));
+  }
 }

@@ -7,7 +7,7 @@ import { errorHandler, notFoundHandler } from './error-handler';
 import { all as jsonSchemas } from './json-schemas';
 import { IResourceDefinition, IDependencies, resourceNamePattern } from './resource';
 import { IStore } from './store';
-import { createDefaultApi } from './default-api';
+import { createDefaultApi, IDefaultApiOptions } from './default-api';
 
 export class ApiServer {
   private _router?: express.Router;
@@ -127,8 +127,8 @@ export class ApiServer {
     this._ajv.addSchema(schema);
   }
 
-  public createDefaultApi(router: express.Router, store: IStore, contract?: string) {
-    createDefaultApi({server:this, store, router, contract });
+  public createDefaultApi(router: express.Router, store: IStore, contract?: string, options: IDefaultApiOptions = {}) {
+    createDefaultApi({server:this, store, router, contract, options });
   }
 
   /**
