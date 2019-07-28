@@ -34,7 +34,16 @@ const getAll = (router: express.Router, store: IStore) => {
 };
 
 const getOne = (router: express.Router, store: IStore) => {
+  router.get('/', wrapHandler(async (req, res) => {
+    const id = new Uuid(req.params.id);
+    const instance = await store.load(id);
 
+    if (instance === null) {
+      throw new NotFoundError();
+    }
+
+    return instance;
+  }));
 }
 
 const create = (router: express.Router, store: IStore) => {

@@ -9,13 +9,15 @@ export type ControllerFactory = (dependencies: IDependencies) => IController;
 
 export type DefaultActionName = 'getAll' | 'getOne' | 'create' | 'replace' | 'patch' | 'delete';
 
+export const ALL_DEFAULT_ACTIONS = ['getAll', 'getOne', 'create', 'replace', 'patch', 'delete'];
+
 export type DefaultActionFactory = (router: express.Router, store: IStore) => void;
 
 export interface DefaultActionMap {
   [name: string]: DefaultActionFactory
 }
 
-export type InstanceActionHandler = (req: express.Request, res: express.Response) => Promise<any>;
+export type InstanceActionHandler = (instance: any, req: express.Request, res: express.Response) => Promise<any>;
 
 export type CollectionActionHandler = (req: express.Request, res: express.Response) => Promise<any>;
 

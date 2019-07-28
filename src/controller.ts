@@ -1,9 +1,10 @@
 import express = require('express');
 import { IResourceDefinition } from './resource';
-import { IStore } from './store';
-import { IDependencies, ControllerFactory, DefaultActionName } from './types';
+import { IDependencies, ControllerFactory, ALL_DEFAULT_ACTIONS } from './types';
 import { wrapHandler } from './handler';
 import { defaultActions } from './crud';
+import { Uuid } from './uuid';
+import { NotFoundError } from './errors';
 
 export const getDefaultController: ControllerFactory = (dependencies: IDependencies) => ({});
 
@@ -14,6 +15,8 @@ export function initializeController(resource: IResourceDefinition, dependencies
     getController = resource.getController;
   }
 
+  const store = resource.store;
+
   const controller = getController(dependencies);
   if (!controller) {
     throw new Error(`${resource.name}: invalid controller`);
@@ -22,15 +25,14 @@ export function initializeController(resource: IResourceDefinition, dependencies
   const router = express.Router();
 
   // Bind routes for all enabled default actions
-  const enabledDefaultActions = controller.defaultActions
-    || ['getAll', 'getOne', 'create', 'replace', 'patch', 'delete'];
+  const enabledDefaultActions = controller.defaultActions || ALL_DEFAULT_ACTIONS;
   if (enabledDefaultActions.length > 0) {
     if (resource.store) {
       for (let action of enabledDefaultActions) {
         defaultActions[action](router, resource.store);
       }
     } else if (controller.defaultActions) {
-      throw new Error(`${resource.name}: no store`);
+      throw new Error(`${resource.name}: can't have default actions without a store`);
     }
   }
 
@@ -41,22 +43,23 @@ export function initializeController(resource: IResourceDefinition, dependencies
   }
 
   if (controller.instanceActions) {
+    if (!store) {
+      throw new Error(`${resource.name}: can't have instance actions without a store`);
+    }
+
     for (let [key, value] of Object.entries(controller.instanceActions)) {
-      router.post(`/:id/${key}`, wrapHandler(value));
+      router.post(`/:id/${key}`, wrapHandler(async (req: express.Request, res: express.Response) => {
+        const id = new Uuid(req.params.id);
+        const instance = await store.load(id);
+
+        if (instance === null) {
+          throw new NotFoundError();
+        }
+
+        return value(instance, req, res);
+      }));
     }
   }
 
   return router;
-}
-
-function bindDefaultCrud(enabledActions: DefaultActionName[], router: express.Router, store: IStore) {
-  if (enabledActions.includes('getAll')) {
-    router.get('/', wrapHandler(async (req, res) => {
-      const result = await store.find(req.query);
-
-      return result;
-    }));
-  }
-
-
 }
