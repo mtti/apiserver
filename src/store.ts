@@ -1,4 +1,9 @@
 import { Uuid } from './uuid';
+import { IDependencies } from './dependencies';
+
+export interface IStoreConstructor {
+  new (dependencies: IDependencies): IStore;
+}
 
 export interface IStore {
   /**

@@ -5,9 +5,12 @@ import express = require('express');
 import { ContractViolationError, RequestBodyValidationError } from './errors';
 import { errorHandler, notFoundHandler } from './error-handler';
 import { all as jsonSchemas } from './json-schemas';
-import { IResourceDefinition, IDependencies, resourceNamePattern } from './resource';
+import { IResourceDefinition, resourceNamePattern } from './resource';
+import { IDependencies } from './dependencies';
 import { IStore } from './store';
 import { createDefaultApi, IDefaultApiOptions } from './default-api';
+
+const RESOURCE_FILE_TYPES = [ 'routes', 'store' ];
 
 export class ApiServer {
   private _router?: express.Router;
@@ -66,8 +69,48 @@ export class ApiServer {
     const resources = fs.readdirSync(directory)
       .map(item => ({ name: item, path: path.join(directory, item)}))
       .filter(item => fs.statSync(item.path).isDirectory())
-      .map(item => ({...item, ...require(item.path)}));
+      .map(item => this.importResource(item.path));
+      //.map(item => ({...item, ...require(item.path)}));
     this.addResources(resources);
+  }
+
+  /**
+   * Import a single resource from a directory.
+   *
+   * @param directory Path to the resource directory.
+   */
+  public importResource(directory: string): IResourceDefinition {
+    const name = directory.split(path.sep).slice(-1)[0];
+
+    const files = fs.readdirSync(directory)
+      .map(name => ({ name, nameParts: name.split('.'), path: path.join(directory, name)}))
+      .filter(item => item.nameParts.length === 3)
+      .map(item => ({
+        ...item,
+        extension: item.nameParts.slice(-1)[0],
+        type: item.nameParts.slice(-2)[0],
+      }))
+      .filter(item => RESOURCE_FILE_TYPES.includes(item.type))
+      .filter(item => item.nameParts[0] === name && item.extension === 'js')
+      .filter(item => fs.statSync(item.path).isFile());
+
+    const resource: IResourceDefinition = {
+      name,
+    };
+
+    for (let file of files) {
+      if (file.type === 'routes') {
+        const { getRoutes } = require(file.path);
+        if (typeof getRoutes !== 'function') {
+          throw new Error(`getRoutes in ${file.path} is not a function`);
+        }
+        resource.getRoutes = getRoutes;
+      } else if (file.type == 'store') {
+        resource.store = require(file.path);
+      }
+    }
+
+    return resource;
   }
 
   /**
@@ -90,8 +133,8 @@ export class ApiServer {
         this.addSchema(resource.jsonSchemas);
       }
 
-      if (resource.createStore) {
-        const store = resource.createStore(newDependencies);
+      if (resource.store) {
+        const store = new resource.store(newDependencies);
         const dependencyName = store.dependencyName || `${resource.name}Store`;
         newDependencies[dependencyName] = store;
       }
