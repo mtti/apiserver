@@ -127,8 +127,8 @@ export class ApiServer {
     this._ajv.addSchema(schema);
   }
 
-  public createDefaultApi(store: IStore, schemaRef: string, router: express.Router) {
-    createDefaultApi(this, store, schemaRef, router);
+  public createDefaultApi(router: express.Router, store: IStore, contract?: string) {
+    createDefaultApi({server:this, store, router, contract });
   }
 
   /**

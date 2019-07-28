@@ -9,6 +9,16 @@ import { ApiServer } from './server';
 
 const jsonParser = bodyParser.json();
 
+export interface IDefaultApiArguments {
+  server: ApiServer,
+
+  router: express.Router,
+
+  store: IStore,
+
+  contract?: string,
+}
+
 /**
  * Creates a default RESTful JSON CRUD API for a resource.
  *
@@ -17,23 +27,36 @@ const jsonParser = bodyParser.json();
  * @param schemaRef
  * @param router
  */
-export function createDefaultApi(apiServer: ApiServer, store: IStore, schemaRef: string, router: express.Router) {
+export function createDefaultApi({ server, router, store, contract}: IDefaultApiArguments) {
   // List instances
   router.get('/', wrapHandler(async (req, res) => {
     const result = await store.find(req.query);
-    for (let instance of result) {
-      apiServer.assertResponse(schemaRef, instance);
+
+    if (contract) {
+      for (let instance of result) {
+        server.assertResponse(contract, instance);
+      }
     }
+
     return result;
   }));
 
   // Create a new instance
   router.post('/', jsonParser, wrapHandler(async (req, res) => {
-    const body = apiServer.assertRequestBody<any>(schemaRef, req.body);
-    const id = new Uuid();
+    let body: any;
+    if (contract) {
+      body = server.assertRequestBody<any>(contract, req.body);
+    } else {
+      body = req.body;
+    }
 
+    const id = new Uuid();
     const savedDocument = await store.create(id, body);
-    return apiServer.assertResponse(schemaRef, savedDocument);
+
+    if (contract) {
+      return server.assertResponse(contract, savedDocument);
+    }
+    return savedDocument;
   }));
 
   // Get an instance
@@ -45,20 +68,30 @@ export function createDefaultApi(apiServer: ApiServer, store: IStore, schemaRef:
       throw new NotFoundError();
     }
 
+    if (contract) {
+      return server.assertResponse(contract, instance);
+    }
     return instance;
   }));
 
   // Replace an instance
   router.put('/:id', jsonParser, wrapHandler(async (req, res) => {
     const id = new Uuid(req.params.id);
-    const instance = apiServer.assertRequestBody<any>(schemaRef, req.body);
+
+    let instance: any;
+    if (contract) {
+      instance = server.assertRequestBody<any>(contract, req.body);
+    } else {
+      instance = req.body;
+    }
+
     store.replace(id, instance);
   }));
 
   // Update instance with JSON Patch
   router.patch('/:id', jsonParser, wrapHandler(async (req, res) => {
     const id = new Uuid(req.params.id);
-    const patch = apiServer.assertRequestBody<jsonPatch.Operation[]>(
+    const patch = server.assertRequestBody<jsonPatch.Operation[]>(
       'https://schemas.mattihiltunen.com/apiserver/json-patch',
       req.body
     );
@@ -69,7 +102,10 @@ export function createDefaultApi(apiServer: ApiServer, store: IStore, schemaRef:
     }
 
     const newInstance = jsonPatch.applyPatch(instance, patch).newDocument;
-    apiServer.assertRequestBody<any>(schemaRef, newInstance);
+
+    if (contract) {
+      server.assertRequestBody<any>(contract, newInstance);
+    }
 
     await store.replace(id, newInstance);
   }));
