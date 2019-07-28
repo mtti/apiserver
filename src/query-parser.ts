@@ -12,7 +12,7 @@ export function parseQueryFilter(query: any): Array<IFilterExpression> {
   return Object.entries(query).reduce((result, [key, conditions]) => {
     if (typeof conditions === 'string') {
       result.push({ key, op: 'eq', val: conditions});
-    } else if (typeof conditions == 'object') {
+    } else if (typeof conditions == 'object' && conditions !== null) {
       Object.entries(conditions).forEach(([op, values]) => {
         if (Array.isArray(values)) {
           values.forEach((val) => {
@@ -22,6 +22,8 @@ export function parseQueryFilter(query: any): Array<IFilterExpression> {
           result.push({key, op, val: values});
         }
       });
+    } else {
+      throw new Error('Conditions must be a string or a filter expression object');
     }
     return result;
   }, [] as Array<IFilterExpression>);
