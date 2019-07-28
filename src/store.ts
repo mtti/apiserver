@@ -9,28 +9,28 @@ export interface IStore {
   dependencyName?: string;
 
   /**
-   * Find existing instances according to a store-specific query object. The default API forwards
-   * the request's query parameters as the `query` argument.
-   */
-  find: (query: any) => Promise<any[]>;
-
-  /**
-   * Load an existing instance. Resolves to `null` if the instance was not found.
-   */
-  load: (id: Uuid) => Promise<any>;
-
-  /**
    * Create a new object.
    */
   create: (id: Uuid, instance: any) => Promise<any>;
 
   /**
+   * Load an existing instance. Resolves to `null` if the instance was not found.
+   */
+  read: (id: Uuid) => Promise<any>;
+
+  /**
    * Replace an existing instance of an object with a new version.
    */
-  replace: (id: Uuid, instance: any) => Promise<any>;
+  update: (id: Uuid, instance: any) => Promise<any>;
 
   /**
    * Delete an existing instance.
    */
-  delete: (id: Uuid) => Promise<void>;
+  destroy: (id: Uuid) => Promise<void>;
+
+  /**
+   * Find existing instances according to a store-specific query object. The default API forwards
+   * the request's query parameters as the `query` argument.
+   */
+  list: (query: any) => Promise<any[]>;
 }

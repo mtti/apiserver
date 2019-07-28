@@ -26,6 +26,13 @@ export function initializeController(resource: IResourceDefinition, dependencies
 
   // Bind routes for all enabled default actions
   const enabledDefaultActions = controller.defaultActions || ALL_DEFAULT_ACTIONS;
+
+  for (let action of enabledDefaultActions) {
+    if (!ALL_DEFAULT_ACTIONS.includes(action)) {
+      throw new Error(`${resource.name}: Unknown default action: ${action}`);
+    }
+  }
+
   if (enabledDefaultActions.length > 0) {
     if (resource.store) {
       for (let action of enabledDefaultActions) {
@@ -50,7 +57,7 @@ export function initializeController(resource: IResourceDefinition, dependencies
     for (let [key, value] of Object.entries(controller.instanceActions)) {
       router.post(`/:id/${key}`, wrapHandler(async (req: express.Request, res: express.Response) => {
         const id = new Uuid(req.params.id);
-        const instance = await store.load(id);
+        const instance = await store.read(id);
 
         if (instance === null) {
           throw new NotFoundError();

@@ -7,9 +7,9 @@ export type WrappedRequestHandler = (req: express.Request, res: express.Response
 
 export type ControllerFactory = (dependencies: IDependencies) => IController;
 
-export type DefaultActionName = 'getAll' | 'getOne' | 'create' | 'replace' | 'patch' | 'delete';
+export type DefaultActionName = 'create' | 'read' | 'update' | 'destroy' | 'list';
 
-export const ALL_DEFAULT_ACTIONS = ['getAll', 'getOne', 'create', 'replace', 'patch', 'delete'];
+export const ALL_DEFAULT_ACTIONS = ['create', 'read', 'update', 'destroy', 'list'];
 
 export type DefaultActionFactory = (router: express.Router, store: IStore) => void;
 
