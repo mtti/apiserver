@@ -68,58 +68,8 @@ export class ApiServer {
     const resources = fs.readdirSync(directory)
       .map(item => ({ name: item, path: path.join(directory, item)}))
       .filter(item => fs.statSync(item.path).isDirectory())
-      .map(item => this.importResource(item.path));
-      //.map(item => ({...item, ...require(item.path)}));
+      .map(item => ({...item, ...require(item.path)}));
     this.addResources(resources);
-  }
-
-  /**
-   * Import a single resource from a directory.
-   *
-   * @param directory Path to the resource directory.
-   */
-  public importResource(directory: string): IResourceDefinition {
-    const name = directory.split(path.sep).slice(-1)[0];
-
-    const files = fs.readdirSync(directory)
-      .map(name => ({ name, nameParts: name.split('.'), path: path.join(directory, name)}))
-      .filter(item => item.nameParts.length === 3)
-      .map(item => ({
-        ...item,
-        extension: item.nameParts.slice(-1)[0],
-        type: item.nameParts.slice(-2)[0],
-      }))
-      .filter(item => RESOURCE_FILE_TYPES.includes(item.type))
-      .filter(item => item.nameParts[0] === name && item.extension === 'js')
-      .filter(item => fs.statSync(item.path).isFile());
-
-    const resource: IResourceDefinition = {
-      name,
-    };
-
-    for (let file of files) {
-      if (file.type === 'routes') {
-        const { getRoutes } = require(file.path);
-        if (typeof getRoutes !== 'function') {
-          throw new Error(`getRoutes in ${file.path} is not a function`);
-        }
-        resource.getRoutes = getRoutes;
-      } else if (file.type == 'store') {
-        const { getStore } = require(file.path);
-        if (typeof getStore !== 'function') {
-          throw new Error(`getStore in ${file.path} is not a function`);
-        }
-        resource.getStore = getStore;
-      } else if (file.type === 'controller') {
-        const { getController } = require(file.path);
-        if (typeof getController !== 'function') {
-          throw new Error(`getController in ${file.path} is not a function`);
-        }
-        resource.getController = getController;
-      }
-    }
-
-    return resource;
   }
 
   /**
