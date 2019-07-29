@@ -1,6 +1,6 @@
 import express = require('express');
 import { IStore } from './store';
-import { IDependencies, ControllerFactory, IController } from './types';
+import { IDependencies, DefaultActionName, DocumentFieldFilter, InstanceActionFactory, CollectionActionFactory, defaultFieldFilter } from './types';
 
 export const resourceNamePattern = /^[a-z\-]+$/i
 
@@ -28,9 +28,15 @@ export interface IResourceDefinition {
   /** Function which creates the resource's JSON API router. */
   getRoutes?: (dependencies: IDependencies, router: express.Router) => void;
 
-  /** Function which creates the resource's controller. */
-  getController?: ControllerFactory;
+  defaultActions?: DefaultActionName[];
+
+  getInstanceActions?: InstanceActionFactory;
+
+  getCollectionActions?: CollectionActionFactory;
 
   /** Schema objects to add to the API's JSON schema validator. */
   jsonSchemas?: object[];
+
+  /** Callback for filtering out document fields during instance operations. */
+  filterFields?: DocumentFieldFilter;
 }

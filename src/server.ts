@@ -3,8 +3,8 @@ import * as fs from 'fs';
 import express = require('express');
 import { errorHandler, notFoundHandler } from './error-handler';
 import { IResourceDefinition, resourceNamePattern } from './resource';
-import { IDependencies } from './types';
-import { initializeController } from './controller';
+import { IDependencies, SessionParser } from './types';
+import { initializeActions } from './actions';
 import { Validator } from './validator';
 
 export class ApiServer {
@@ -12,6 +12,7 @@ export class ApiServer {
   private _router?: express.Router;
   private _resources: IResourceDefinition[] = [];
   private _initialized: boolean = false;
+  private _getSession: SessionParser;
 
   /**
    * An Express router bound to API resources. Only available after the API server has been
@@ -24,8 +25,14 @@ export class ApiServer {
     return this._router;
   }
 
-  constructor() {
+  /**
+   * Constructor
+   *
+   * @param getSession Function that parses a session from an express request.
+   */
+  constructor(getSession?: SessionParser) {
     this._validator = new Validator();
+    this._getSession = getSession || (async (req: express.Request) => null);
   }
 
   /**
@@ -102,16 +109,13 @@ export class ApiServer {
 
     // Initialize controllers
     for (let resource of this._resources) {
-      const router = initializeController(resource, newDependencies);
+      const router = initializeActions(resource, newDependencies);
 
       if (resource.getRoutes) {
         resource.getRoutes(newDependencies, router);
       }
 
-      let slug = `${resource.name}s`;
-      if (resource.slug) {
-        slug = resource.slug;
-      }
+      const slug = resource.slug || `${resource.name}s`;
       this._router.use(`/${slug}`, router);
     }
 
