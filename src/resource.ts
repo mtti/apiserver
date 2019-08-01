@@ -26,6 +26,12 @@ export type CollectionActionHandler = (args: ActionArguments) => Promise<object>
 
 export type InstanceActionHandler = (args: InstanceActionArguments) => Promise<object>;
 
+export enum ActionResponseFilter {
+  None,
+  Document,
+  Collection,
+};
+
 export interface IActionBindParameters {
   store: IStore;
   validator: Validator;
@@ -226,7 +232,7 @@ export abstract class Action {
   protected _requestContract?: string;
   protected _responseContract?: string;
   protected _requestIsDocument: boolean = true;
-  protected _responseIsDocument: boolean = true;
+  protected _responseFilter: ActionResponseFilter = ActionResponseFilter.Document;
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
 
@@ -293,8 +299,11 @@ export abstract class Action {
     return this;
   }
 
-  setResponseIsDocument(value: boolean): this {
-    this._responseIsDocument = value;
+  /**
+   * Set the action's filtering type.
+   */
+  setResponseFilter(value: ActionResponseFilter): this {
+    this._responseFilter = value;
     return this;
   }
 
@@ -322,13 +331,12 @@ export abstract class Action {
   protected abstract _createRoute(dependencies: IDependencies): express.RequestHandler;
 
   protected async _finalizeResponse(session: Session, validator: Validator, response: object): Promise<object> {
-    // Filter out fields session is not allowed to read
-    if (this._responseIsDocument) {
-      if (Array.isArray(response)) {
-        response = await Promise.all(response.map(item => session.filterResponseFields(this._resource, item)));
-      } else {
-        response = await session.filterResponseFields(this._resource, response);
-      }
+    // If this an individual document or a collection, filter out fields the session is not allowed
+    // to read.
+    if (this._responseFilter === ActionResponseFilter.Document) {
+      response = await session.filterDocumentResponse(this._resource, response);
+    } else if (this._responseFilter === ActionResponseFilter.Collection) {
+      response = await session.filterCollectionResponse(this._resource, response);
     }
 
     // If a response contract is specified, make sure the response conforms to it
@@ -528,6 +536,7 @@ const defaultActionFactories: IDefaultActionFactories = {
     resource.createCollectionAction('list')
       .setMethod('GET')
       .setSuffix(null)
-      .setHandler(async () => []);
+      .setResponseFilter(ActionResponseFilter.Collection)
+      .setHandler(async ({ store }) => store.list(null));
   },
 }

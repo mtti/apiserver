@@ -24,8 +24,9 @@ export interface IStore {
   destroy: (id: string) => Promise<object>;
 
   /**
-   * Find existing instances according to a store-specific query object. The default API forwards
-   * the request's query parameters as the `query` argument.
+   * List existing documents.
+   *
+   * Should resolve to an object keyed by each document's primary key as a string.
    */
-  list: (query: any) => Promise<any[]>;
+  list: (query: any) => Promise<object>;
 }

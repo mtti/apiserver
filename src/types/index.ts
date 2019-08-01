@@ -1,4 +1,3 @@
-import express = require('express');
 export * from './dependencies';
 
 /** Raw document */
