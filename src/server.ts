@@ -2,17 +2,18 @@ import * as path from 'path';
 import * as fs from 'fs';
 import express = require('express');
 import { errorHandler, notFoundHandler } from './error-handler';
-import { IResourceDefinition, resourceNamePattern } from './resource';
-import { IDependencies, SessionParser } from './types';
-import { initializeActions } from './actions';
+import { Resource } from './resource';
+import { IDependencies } from './types';
 import { Validator } from './validator';
+import { wrapHandler } from './handler';
+import { SessionParser, PermissiveSession} from './session';
 
 export class ApiServer {
+  private _sessionParser: SessionParser = async () => new PermissiveSession();
   private _validator: Validator;
   private _router?: express.Router;
-  private _resources: IResourceDefinition[] = [];
+  private _resources: Resource[] = [];
   private _initialized: boolean = false;
-  private _getSession: SessionParser;
 
   /**
    * An Express router bound to API resources. Only available after the API server has been
@@ -30,9 +31,11 @@ export class ApiServer {
    *
    * @param getSession Function that parses a session from an express request.
    */
-  constructor(getSession?: SessionParser) {
+  constructor(sessionParser?: SessionParser) {
+    if (sessionParser) {
+      this._sessionParser = sessionParser;
+    }
     this._validator = new Validator();
-    this._getSession = getSession || (async (req: express.Request) => null);
   }
 
   /**
@@ -41,18 +44,13 @@ export class ApiServer {
    *
    * @param resources Resource definitions to add.
    */
-  public addResources(resources: IResourceDefinition[]) {
+  public addResources(resources: Resource[]) {
     if (this._initialized) {
       throw new Error('Tried to add a resource after ApiServer initializaton');
     }
-
-    // Runtime validation
     for (let resource of resources) {
-      if (!resource.name || !resourceNamePattern.test(resource.name)) {
-        throw new Error('Missing or invalid resource name');
-      }
-      if (resource.slug && !resourceNamePattern.test(resource.slug)) {
-        throw new Error(`Resource ${resource.name} has an invalid slug`);
+      if (!(resource instanceof Resource)) {
+        throw new Error('Tried to add a resource that is not a Resource class instance');
       }
     }
 
@@ -81,47 +79,46 @@ export class ApiServer {
    * @returns A promise resolving to a copy of the `dependencies` argument with the ApiServer
    *  and resource stores added to it.
    */
-  public async initialize(dependencies: IDependencies): Promise<IDependencies> {
+  public async initialize(baseDependencies: IDependencies): Promise<IDependencies> {
     if (this._initialized) {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
 
-    const newDependencies:IDependencies = {
-      ...dependencies,
+    const dependencies:IDependencies = {
+      ...baseDependencies,
       apiServer: this,
-      validator: this._validator
+      validator: this._validator,
+      stores: {},
+      getSession: this._sessionParser,
     };
+    const collections: string[] = [];
 
-    // Initialize resources
+    // Initialize resource stores
     for (let resource of this._resources) {
-      if (resource.jsonSchemas) {
-        this._validator.addSchema(resource.jsonSchemas);
-      }
+      collections.push(resource.slug);
 
-      if (resource.getStore) {
-        resource.store = resource.getStore(newDependencies);
-        const dependencyName = resource.store.dependencyName || `${resource.name}Store`;
-        newDependencies[dependencyName] = resource.store;
+      this._validator.addSchema(resource.schemas);
+
+      const initializedResource = resource.initialize(dependencies);
+      if (initializedResource.hasStore) {
+        dependencies.stores[resource.name] = initializedResource.store;
       }
     }
 
+    // Initialize actions and custom routes
+
     this._router = express.Router();
 
-    // Initialize controllers
+    this._router.get('/', wrapHandler(async (req: express.Request, res: express.Response) => collections));
+
     for (let resource of this._resources) {
-      const router = initializeActions(resource, newDependencies);
-
-      if (resource.getRoutes) {
-        resource.getRoutes(newDependencies, router);
-      }
-
-      const slug = resource.slug || `${resource.name}s`;
-      this._router.use(`/${slug}`, router);
+      const router = resource.bind(dependencies);
+      this._router.use(`/${resource.slug}`, router);
     }
 
     this._router.use(notFoundHandler);
     this._router.use(errorHandler);
 
-    return newDependencies;
+    return dependencies;
   }
 }

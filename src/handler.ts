@@ -1,5 +1,7 @@
 import express = require('express');
-import { WrappedRequestHandler } from './types';
+
+/** Promisified request handler. */
+export type WrappedRequestHandler = (req: express.Request, res: express.Response) => Promise<any>;
 
 /**
  * Wrap a JSON request handler. The wrapped handler can resolve to an object which will be sent
