@@ -1,4 +1,4 @@
-import { IDependencies } from './types/dependencies';
+import { IDependencies } from './types';
 
 export type StoreFactory = (dependencies: IDependencies) => IStore;
 
