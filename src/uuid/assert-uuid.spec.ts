@@ -1,0 +1,68 @@
+jest.mock('./is-uuid-string');
+import * as original from './is-uuid-string';
+import { assertUuid } from './assert-uuid';
+import { Uuid } from './uuid';
+import { BadRequestError } from '../errors';
+
+import { VALID_UUID_V4 } from '../../test/constants';
+
+describe('assertUuid()', () => {
+  let result: any;
+  let error: any;
+  let mock:jest.SpyInstance;
+
+  beforeEach(() => {
+    result = undefined;
+    error = undefined;
+  });
+
+  afterEach(() => {
+    mock.mockRestore();
+  });
+
+  describe('when isUuidString returns false', () => {
+    beforeEach(() => {
+      mock = jest.spyOn(original, 'isUuidString');
+      mock.mockImplementation(() => false);
+    });
+
+    beforeEach(() => {
+      try {
+        result = assertUuid(VALID_UUID_V4);
+      } catch (err) {
+        error = err;
+      }
+    });
+
+    it('should throw a BadRequestError', () => {
+      expect(error).toBeInstanceOf(BadRequestError);
+    });
+
+    it('should not return a result', () => {
+      expect(result).not.toBeTruthy();
+    });
+  });
+
+  describe('when isUuidString returns true', () => {
+    beforeEach(() => {
+      mock = jest.spyOn(original, 'isUuidString');
+      mock.mockImplementation(() => true);
+    });
+
+    beforeEach(() => {
+      try {
+        result = assertUuid(VALID_UUID_V4);
+      } catch (err) {
+        error = err;
+      }
+    });
+
+    it('should not throw an exception', () => {
+      expect(error).not.toBeTruthy();
+    });
+
+    it('should return an UUID instance', () => {
+      expect(result).toBeInstanceOf(Uuid);
+    });
+  });
+});
