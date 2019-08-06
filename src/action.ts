@@ -11,11 +11,9 @@ import { HttpMethod, IDependencies } from './types';
 
 const jsonParser = bodyParser.json();
 
-export enum ActionResponseFilter {
-  None,
-  Document,
-  Collection,
-};
+export type ActionResponseType = 'raw' | 'document' | 'collection';
+
+export const ACTION_RESPONSE_TYPES: ActionResponseType[] = [ 'raw', 'document', 'collection' ];
 
 export type CollectionActionHandler = (args: ActionArguments) => Promise<object>;
 
@@ -82,7 +80,7 @@ export abstract class Action {
   protected _requestContract?: string;
   protected _responseContract?: string;
   protected _requestIsDocument: boolean = true;
-  protected _responseFilter: ActionResponseFilter = ActionResponseFilter.Document;
+  protected _responseFilter: ActionResponseType = 'document';
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
 
@@ -150,9 +148,26 @@ export abstract class Action {
   }
 
   /**
-   * Set the action's filtering type.
+   * Set the action's response type. This affects what kind of automatic filtering is applied
+   * to the object returned by the handler.
+   *
+   * For `raw`, no filtering is done.
+   *
+   * For `document`, all first-level fields are filtered with `Session.filterDocumentResponse` to
+   * omit any fields that the user is not authorized to read. This is the default.
+   *
+   * For `collection`, the returned object is assumed to contain zero or more documents indexed
+   * by their primary key and each first-level value will be filtered as a `document`.
+   *
+   * @param value The type of object the action sends in response to requests. One of `raw`,
+   * `collection` or `document`. Defaults to `document`.
    */
-  setResponseFilter(value: ActionResponseFilter): this {
+  respondsWithType(value: ActionResponseType): this {
+    if (!ACTION_RESPONSE_TYPES.includes(value)) {
+      throw new TypeError(
+        `Invalid action response type: ${value}, must be one of ${ACTION_RESPONSE_TYPES.join(',')}`
+      );
+    }
     this._responseFilter = value;
     return this;
   }
@@ -183,9 +198,9 @@ export abstract class Action {
   protected async _finalizeResponse(session: Session, validator: Validator, response: object): Promise<object> {
     // If this an individual document or a collection, filter out fields the session is not allowed
     // to read.
-    if (this._responseFilter === ActionResponseFilter.Document) {
+    if (this._responseFilter === 'document') {
       response = await session.filterDocumentResponse(this._resource, response);
-    } else if (this._responseFilter === ActionResponseFilter.Collection) {
+    } else if (this._responseFilter === 'collection') {
       response = await session.filterCollectionResponse(this._resource, response);
     }
 
@@ -205,7 +220,20 @@ export class CollectionAction extends Action {
     super(resource, name);
   }
 
-  setHandler(handler: CollectionActionHandler): this {
+  respondsWithRaw(handler: CollectionActionHandler): this {
+    this.respondsWithType('raw');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithDocument(handler: CollectionActionHandler): this {
+    this.respondsWithType('document');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithCollection(handler: CollectionActionHandler): this {
+    this.respondsWithType('collection');
     this._handler = handler;
     return this;
   }
@@ -267,8 +295,20 @@ export class InstanceAction extends Action {
     this._basePath = '/:id';
   }
 
-  /** Set the action's handler callback */
-  setHandler(handler: InstanceActionHandler): InstanceAction {
+  respondsWithRaw(handler: InstanceActionHandler): this {
+    this.respondsWithType('raw');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithDocument(handler: InstanceActionHandler): this {
+    this.respondsWithType('document');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithCollection(handler: InstanceActionHandler): this {
+    this.respondsWithType('collection');
     this._handler = handler;
     return this;
   }

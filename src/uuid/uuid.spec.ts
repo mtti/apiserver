@@ -1,7 +1,8 @@
 jest.mock('./is-uuid-string');
 import * as original from './is-uuid-string';
 import { Uuid } from './uuid';
-import { VALID_UUID_V4 } from '../../test/constants';
+
+const VALID_UUID_V4 = 'f4d35e33-7b5d-49f6-9a61-1f1bc3738929';
 
 const actual = jest.requireActual('./is-uuid-string');
 

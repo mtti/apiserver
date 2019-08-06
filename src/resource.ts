@@ -3,7 +3,7 @@ import { DefaultActionName, IDependencies } from './types';
 import { IStore, StoreFactory } from './store';
 import { Uuid } from './uuid';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
-import { ActionResponseFilter, CollectionAction, InstanceAction } from './action';
+import { CollectionAction, InstanceAction } from './action';
 
 export class Resource {
   private _name: string;
@@ -153,7 +153,7 @@ const defaultActionFactories: IDefaultActionFactories = {
     resource.createCollectionAction('create')
       .setMethod('POST')
       .setSuffix(null)
-      .setHandler(async ({ store, body }) => {
+      .respondsWithDocument(async ({ store, body }) => {
         const id = new Uuid().toString();
         return store.create(id, body);
       });
@@ -163,28 +163,27 @@ const defaultActionFactories: IDefaultActionFactories = {
     resource.createInstanceAction('read')
       .setMethod('GET')
       .setSuffix(null)
-      .setHandler(async ({ document }) => document);
+      .respondsWithDocument(async ({ document }) => document);
   },
 
   update: (resource: Resource) => {
     resource.createInstanceAction('update')
       .setMethod('PUT')
       .setSuffix(null)
-      .setHandler(async ({ store, id, document, body }) => store.update(id, { ...document, ...body }));
+      .respondsWithDocument(async ({ store, id, document, body }) => store.update(id, { ...document, ...body }));
   },
 
   destroy: (resource: Resource) => {
     resource.createInstanceAction('destroy')
       .setMethod('DELETE')
       .setSuffix(null)
-      .setHandler(async ({ store, id }) => store.destroy(id));
+      .respondsWithDocument(async ({ store, id }) => store.destroy(id));
   },
 
   list: (resource: Resource) => {
     resource.createCollectionAction('list')
       .setMethod('GET')
       .setSuffix(null)
-      .setResponseFilter(ActionResponseFilter.Collection)
-      .setHandler(async ({ store }) => store.list(null));
+      .respondsWithCollection(async ({ store }) => store.list(null));
   },
 }

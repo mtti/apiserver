@@ -4,7 +4,8 @@ import { assertUuid } from './assert-uuid';
 import { Uuid } from './uuid';
 import { BadRequestError } from '../errors';
 
-import { VALID_UUID_V4 } from '../../test/constants';
+const VALID_UUID_V4 = 'f4d35e33-7b5d-49f6-9a61-1f1bc3738929';
+
 
 describe('assertUuid()', () => {
   let result: any;
