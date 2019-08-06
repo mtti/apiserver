@@ -58,21 +58,6 @@ export class ApiServer {
   }
 
   /**
-   * Import resources from a file system path. Only available before the API server is initialized.
-   * Calling this before will throw an Error.
-   *
-   * @param directory Path to the directory to import resources from. Should be a directory
-   *  which contains JavaScript modules as subdirectories.
-   */
-  public importResources(directory: string) {
-    const resources = fs.readdirSync(directory)
-      .map(item => ({ name: item, path: path.join(directory, item)}))
-      .filter(item => fs.statSync(item.path).isDirectory())
-      .map(item => ({...item, ...require(item.path)}));
-    this.addResources(resources);
-  }
-
-  /**
    * Initialize the API server.
    *
    * @param dependencies Dependencies to inject into the store and router creation callbacks.
