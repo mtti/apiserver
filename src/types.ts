@@ -11,9 +11,5 @@ export interface IDocument {
 
 /** Interface for the dependency injection container. */
 export interface IDependencies {
-  stores: {
-    [name: string]: IStore,
-  };
-
   [name: string]: any;
 }
