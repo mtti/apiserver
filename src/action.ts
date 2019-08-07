@@ -103,8 +103,12 @@ export abstract class Action {
     this._suffix = name;
   }
 
-  /** Assign this action's HTTP method */
-  setMethod(method: HttpMethod): this {
+  /**
+   * Set the action's HTTP method.
+   *
+   * @param method One of `GET`, `POST`, `PUT`, `PATCH` or `DELETE`-
+   */
+  hasMethod(method: HttpMethod): this {
     if (!SUPPORTED_HTTP_METHODS.includes(method)) {
       throw new Error(`Unsupported HTTP method: ${method}`);
     }
@@ -115,8 +119,12 @@ export abstract class Action {
     return this;
   }
 
-  /** Set this action's path suffix */
-  setSuffix(value: string|null): this {
+  /**
+   * Set the action's path suffix.
+   *
+   * @param value The path suffix or `null` for no suffix
+   */
+  hasSuffix(value: string|null): this {
     if (value) {
       if (value.includes('/')) {
         throw new Error('Suffix can not contain a slash');
@@ -127,22 +135,46 @@ export abstract class Action {
     return this;
   }
 
-  setHasRequestBody(value: boolean): this {
+  /**
+   * Set whether the action receives a request body. This is enabled by default if the action's
+   * HTTP method is set to `POST`, `PUT` or `PATCH`.
+   *
+   * @param value `true` or `false`
+   */
+  receivesBody(value: boolean = true): this {
     this._hasRequestBody = value;
     return this;
   }
 
-  setRequestContract(value: string): this {
+  /**
+   * Set the JSON schema to validate incoming request bodies.
+   *
+   * @param value JSON schema reference
+   */
+  validatesRequestWith(value: string): this {
     this._requestContract = value;
     return this;
   }
 
-  setResponseContract(value: string): this {
+  /**
+   * Set the JSON schema used to validate outgoing responses.
+   *
+   * @param value JSON schema reference
+   */
+  validatesResponseWith(value: string): this {
     this._responseContract = value;
     return this;
   }
 
-  setRequestIsDocument(value: boolean): this {
+  /**
+   * Set whether the action receives a document. If it does, the request body is automatically
+   * filtered with `Session.filterRequestFields` to remove fields which the user is not authorized
+   * to write. Has no effect if the action has been configured not to receive a request body.
+   * Defaults to `true`.
+   *
+   * @param value `true` or `false`
+   */
+  receivesDocument(value: boolean = true): this {
     this._requestIsDocument = value;
     return this;
   }

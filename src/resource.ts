@@ -151,8 +151,8 @@ interface IDefaultActionFactories {
 const defaultActionFactories: IDefaultActionFactories = {
   create: (resource: Resource) => {
     resource.createCollectionAction('create')
-      .setMethod('POST')
-      .setSuffix(null)
+      .hasMethod('POST')
+      .hasSuffix(null)
       .respondsWithDocument(async ({ store, body }) => {
         const id = new Uuid().toString();
         return store.create(id, body);
@@ -161,29 +161,29 @@ const defaultActionFactories: IDefaultActionFactories = {
 
   read: (resource: Resource) => {
     resource.createInstanceAction('read')
-      .setMethod('GET')
-      .setSuffix(null)
+      .hasMethod('GET')
+      .hasSuffix(null)
       .respondsWithDocument(async ({ document }) => document);
   },
 
   update: (resource: Resource) => {
     resource.createInstanceAction('update')
-      .setMethod('PUT')
-      .setSuffix(null)
+      .hasMethod('PUT')
+      .hasSuffix(null)
       .respondsWithDocument(async ({ store, id, document, body }) => store.update(id, { ...document, ...body }));
   },
 
   destroy: (resource: Resource) => {
     resource.createInstanceAction('destroy')
-      .setMethod('DELETE')
-      .setSuffix(null)
+      .hasMethod('DELETE')
+      .hasSuffix(null)
       .respondsWithDocument(async ({ store, id }) => store.destroy(id));
   },
 
   list: (resource: Resource) => {
     resource.createCollectionAction('list')
-      .setMethod('GET')
-      .setSuffix(null)
+      .hasMethod('GET')
+      .hasSuffix(null)
       .respondsWithCollection(async ({ store }) => store.list(null));
   },
 }
