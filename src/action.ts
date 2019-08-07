@@ -285,7 +285,7 @@ export class CollectionAction extends Action {
       const session = await getSession(req);
 
       // Authorize general access to the collection
-      if (!(await session.canAccessResource(this._resource))) {
+      if (!(await session.preAuthorizeResource(this._resource))) {
         throw new ForbiddenError();
       }
 
@@ -301,12 +301,12 @@ export class CollectionAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = session.filterRequestFields(this._resource, body);
+          body = session.filterDocumentRequest(this._resource, body);
         }
       }
 
       // Authorize action
-      if (!(await session.canPerformCollectionAction(this._resource, this._name, body))) {
+      if (!(await session.authorizeCollectionAction(this._resource, this._name, body))) {
         throw new ForbiddenError();
       }
 
@@ -372,7 +372,7 @@ export class InstanceAction extends Action {
       const session = await getSession(req);
 
       // Authorize general access to the collection
-      if (!(await session.canAccessResource(this._resource))) {
+      if (!(await session.preAuthorizeResource(this._resource))) {
         throw new ForbiddenError();
       }
 
@@ -385,12 +385,12 @@ export class InstanceAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = session.filterRequestFields(this._resource, body);
+          body = session.filterDocumentRequest(this._resource, body);
         }
       }
 
       // Initial authorization before the target document is loaded
-      if (!(await session.mightPerformDocumentAction(this._resource, this._name, id, body))) {
+      if (!(await session.preAuthorizeDocumentAction(this._resource, this._name, id, body))) {
         throw new ForbiddenError();
       }
 
@@ -401,7 +401,7 @@ export class InstanceAction extends Action {
           throw new NotFoundError();
         }
 
-        if (!(await session.canPerformDocumentAction(this._resource, this._name, id, document, body))) {
+        if (!(await session.authorizeDocumentAction(this._resource, this._name, id, document, body))) {
           throw new ForbiddenError();
         }
       }

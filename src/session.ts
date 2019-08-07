@@ -1,30 +1,63 @@
 import express = require('express');
 import { Resource } from './resource';
 
+/**
+ * A callback which crates a Session subclass by parsing an express request.
+ */
 export type SessionParser = (req: express.Request) => Promise<Session>;
 
+/**
+ * Base class for application-specific subclasses.
+ */
 export abstract class Session {
-  /** Can the session access a resource at all? */
-  async canAccessResource(resource: Resource): Promise<boolean> {
+  /**
+   * Check if the session can have any access to a resource at all.
+   *
+   * @param resource The resource being accessed
+   */
+  async preAuthorizeResource(resource: Resource): Promise<boolean> {
     return true;
   }
 
-  async canPerformCollectionAction(resource: Resource, action: string, body?: any): Promise<boolean> {
+  /**
+   * Check if the session is authorized to perform a collection action.
+   *
+   * @param resource The resource on which the action is being performed
+   * @param action Name of the action
+   * @param body The request body, if any
+   */
+  async authorizeCollectionAction(resource: Resource, action: string, body?: any): Promise<boolean> {
     return true;
   }
 
-  /** Check if a document action might be possible without loading the target document. */
-  async mightPerformDocumentAction(resource: Resource, action: string, id: string, body?: object): Promise<boolean> {
+  /**
+   * Check if the session is authorized to perform an action on a document before loading said
+   * document.
+   *
+   * @param resource The resource on which the action is being performed
+   * @param action Name of the action being performed
+   * @param id ID of the document on which the action is being performed
+   * @param body Request body, if any
+   */
+  async preAuthorizeDocumentAction(resource: Resource, action: string, id: string, body?: object): Promise<boolean> {
     return true;
   }
 
-  /** Check if an action can be performed, with a fully loaded target document. */
-  async canPerformDocumentAction(resource: Resource, action: string, id: string, document: object, body?: any): Promise<boolean> {
+  /**
+   * Check if the session is authorized to perform an action on a document.
+   *
+   * @param resource The resource on which the action is being performed
+   * @param action Name of the action being performed
+   * @param id ID of the document on which the action is being performed
+   * @param document The loaded document on which the action is being performed
+   * @param body Request body, if any
+   */
+  async authorizeDocumentAction(resource: Resource, action: string, id: string, document: object, body?: any): Promise<boolean> {
     return true;
   }
 
   /** Filter fields from an incoming document */
-  async filterRequestFields(resource: Resource, document: object): Promise<object> {
+  async filterDocumentRequest(resource: Resource, document: object): Promise<object> {
     return { ...document };
   }
 
