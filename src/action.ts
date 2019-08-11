@@ -8,6 +8,7 @@ import { Session, SessionParser } from './session';
 import { wrapHandler } from './handler';
 import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from './constants';
 import { HttpMethod, IDependencies } from './types';
+import { Emitter } from './emitter';
 
 const jsonParser = bodyParser.json();
 
@@ -15,9 +16,9 @@ export type ActionResponseType = 'raw' | 'document' | 'collection';
 
 export const ACTION_RESPONSE_TYPES: ActionResponseType[] = [ 'raw', 'document', 'collection' ];
 
-export type CollectionActionHandler = (args: ActionArguments) => Promise<object>;
+export type CollectionActionHandler = (args: ActionArguments) => Promise<Emitter>;
 
-export type InstanceActionHandler = (args: InstanceActionArguments) => Promise<object>;
+export type InstanceActionHandler = (args: InstanceActionArguments) => Promise<Emitter>;
 
 export interface IActionBindParameters {
   store: IStore;
@@ -27,6 +28,7 @@ export interface IActionBindParameters {
 export class ActionArguments {
   private _req: express.Request;
   private _store?: IStore;
+  private _emitter: Emitter;
   private _body?: any;
 
   get req(): express.Request {
@@ -40,6 +42,10 @@ export class ActionArguments {
     return this._store;
   }
 
+  get emit(): Emitter {
+    return this._emitter;
+  }
+
   get body(): any {
     if (!this._body) {
       throw new Error('No body');
@@ -47,7 +53,7 @@ export class ActionArguments {
     return this._body;
   }
 
-  constructor(req: express.Request, store: IStore|null, body: any|null) {
+  constructor(req: express.Request, store: IStore|null, emitter:Emitter, body: any|null) {
     if (!req) {
       throw new Error('req is required');
     }
@@ -56,6 +62,8 @@ export class ActionArguments {
     if (store) {
       this._store = store;
     }
+
+    this._emitter = emitter;
 
     if (body) {
       this._body = body;
@@ -78,8 +86,8 @@ export class InstanceActionArguments extends ActionArguments {
     return this._document;
   }
 
-  constructor(req: express.Request, store: IStore|null, id: string, document: any|null, body: any|null) {
-    super(req, store, body);
+  constructor(req: express.Request, store: IStore|null, id: string, document: any|null, emitter: Emitter, body: any|null) {
+    super(req, store, emitter, body);
     this._id = id;
     this._document = document;
   }
@@ -94,7 +102,6 @@ export abstract class Action {
   protected _requestContract?: string;
   protected _responseContract?: string;
   protected _requestIsDocument: boolean = true;
-  protected _responseFilter: ActionResponseType = 'document';
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
 
@@ -193,31 +200,6 @@ export abstract class Action {
     return this;
   }
 
-  /**
-   * Set the action's response type. This affects what kind of automatic filtering is applied
-   * to the object returned by the handler.
-   *
-   * For `raw`, no filtering is done.
-   *
-   * For `document`, all first-level fields are filtered with `Session.filterDocumentResponse` to
-   * omit any fields that the user is not authorized to read. This is the default.
-   *
-   * For `collection`, the returned object is assumed to contain zero or more documents indexed
-   * by their primary key and each first-level value will be filtered as a `document`.
-   *
-   * @param value The type of object the action sends in response to requests. One of `raw`,
-   * `collection` or `document`. Defaults to `document`.
-   */
-  respondsWithType(value: ActionResponseType): this {
-    if (!ACTION_RESPONSE_TYPES.includes(value)) {
-      throw new TypeError(
-        `Invalid action response type: ${value}, must be one of ${ACTION_RESPONSE_TYPES.join(',')}`
-      );
-    }
-    this._responseFilter = value;
-    return this;
-  }
-
   /** Bind the action to an express router */
   bind(router: express.Router, dependencies: IDependencies) {
     const routePath = this.path;
@@ -242,14 +224,6 @@ export abstract class Action {
   protected abstract _createRoute(dependencies: IDependencies): express.RequestHandler;
 
   protected async _finalizeResponse(session: Session, validator: Validator, response: object): Promise<object> {
-    // If this an individual document or a collection, filter out fields the session is not allowed
-    // to read.
-    if (this._responseFilter === 'document') {
-      response = await session.filterDocumentResponse(this._resource, response);
-    } else if (this._responseFilter === 'collection') {
-      response = await session.filterCollectionResponse(this._resource, response);
-    }
-
     // If a response contract is specified, make sure the response conforms to it
     if (this._responseContract) {
       validator.assertResponse(this._responseContract, response);
@@ -260,26 +234,13 @@ export abstract class Action {
 }
 
 export class CollectionAction extends Action {
-  private _handler: CollectionActionHandler = async () => ({});
+  private _handler: CollectionActionHandler = async ({ emit }) => emit.raw({});
 
   constructor(resource: Resource, name: string) {
     super(resource, name);
   }
 
-  respondsWithRaw(handler: CollectionActionHandler): this {
-    this.respondsWithType('raw');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithDocument(handler: CollectionActionHandler): this {
-    this.respondsWithType('document');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithCollection(handler: CollectionActionHandler): this {
-    this.respondsWithType('collection');
+  handler(handler: CollectionActionHandler): this {
     this._handler = handler;
     return this;
   }
@@ -324,16 +285,17 @@ export class CollectionAction extends Action {
         throw new ForbiddenError();
       }
 
-      const args = new ActionArguments(req, this._resource.initialized.store, body);
-      let result = await this._handler(args);
+      const emitter = new Emitter(this._resource, session);
+      const args = new ActionArguments(req, this._resource.initialized.store, emitter, body);
+      await this._handler(args);
 
-      return this._finalizeResponse(session, validator, result);
+      return this._finalizeResponse(session, validator, emitter.response);
     });
   }
 }
 
 export class InstanceAction extends Action {
-  private _handler: InstanceActionHandler = async () => ({});
+  private _handler: InstanceActionHandler = async ({ emit }) => emit.raw({});
   private _autoload: boolean = true;
 
   constructor(resource: Resource, name: string) {
@@ -341,20 +303,7 @@ export class InstanceAction extends Action {
     this._basePath = '/:id';
   }
 
-  respondsWithRaw(handler: InstanceActionHandler): this {
-    this.respondsWithType('raw');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithDocument(handler: InstanceActionHandler): this {
-    this.respondsWithType('document');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithCollection(handler: InstanceActionHandler): this {
-    this.respondsWithType('collection');
+  handler(handler: InstanceActionHandler): this {
     this._handler = handler;
     return this;
   }
@@ -429,15 +378,16 @@ export class InstanceAction extends Action {
         }
       }
 
-      let result: object = await this._handler(new InstanceActionArguments(
+      const emitter = new Emitter(this._resource, session);
+      await this._handler(new InstanceActionArguments(
         req,
         this._resource.initialized.store,
         id.toString(),
         document,
+        emitter,
         body
       ));
-
-      return this._finalizeResponse(session, validator, result);
+      return this._finalizeResponse(session, validator, emitter.response);
     });
   }
 }

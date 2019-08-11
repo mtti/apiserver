@@ -21,7 +21,7 @@ export interface IStore {
   /**
    * Delete an existing instance.
    */
-  destroy: (id: string) => Promise<object>;
+  destroy: (id: string) => Promise<void>;
 
   /**
    * List existing documents.
