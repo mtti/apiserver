@@ -1,7 +1,7 @@
 {
   "name": "@mtti/apiserver",
-  "version": "0.1.0",
-  "description": "Library for reducing boilerplate when building RESTful JSON APIs",
+  "version": "0.2.0",
+  "description": "Microframework for RESTful JSON CRUD APIs",
   "main": "dist/index.js",
   "private": true,
   "engines": {
