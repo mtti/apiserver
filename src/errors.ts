@@ -62,6 +62,12 @@ export class NotFoundError extends ApiError {
   }
 }
 
+export class UnsupportedMediaTypeError extends ApiError {
+  constructor(message: string = 'Unsupported Media Type') {
+    super(415, message);
+  }
+}
+
 /** Base class for JSON schema violations. */
 export class JSONSchemaViolationError extends ApiError {
   private _errors: Ajv.ErrorObject[];

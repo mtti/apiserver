@@ -4,6 +4,7 @@ import { IStore, StoreFactory } from './store';
 import { Uuid } from './uuid';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { CollectionAction, InstanceAction } from './action';
+import { UnsupportedMediaTypeError } from './errors';
 
 export class Resource {
   private _name: string;
@@ -144,11 +145,11 @@ export class InitializedResource {
   }
 }
 
-interface IDefaultActionFactories {
-  [name: string]: (resource: Resource) => void;
+type DefaultActionFactories = {
+  [K in DefaultActionName]: (resource: Resource) => void;
 }
 
-const defaultActionFactories: IDefaultActionFactories = {
+const defaultActionFactories: DefaultActionFactories = {
   create: (resource: Resource) => {
     resource.createCollectionAction('create')
       .hasMethod('POST')
@@ -166,11 +167,34 @@ const defaultActionFactories: IDefaultActionFactories = {
       .respondsWithDocument(async ({ document }) => document);
   },
 
-  update: (resource: Resource) => {
-    resource.createInstanceAction('update')
+  replace: (resource: Resource) => {
+    resource.createInstanceAction('replace')
       .hasMethod('PUT')
       .hasSuffix(null)
-      .respondsWithDocument(async ({ store, id, document, body }) => store.update(id, { ...document, ...body }));
+      .respondsWithDocument(async ({ store, id, document, body }) => store.replace(id, { ...document, ...body }));
+  },
+
+  patch: (resource: Resource) => {
+    resource.createInstanceAction('patch')
+      .hasMethod('PATCH')
+      .hasSuffix(null)
+      .respondsWithDocument(async ({ req, store, id, document, body }) => {
+        // TODO: Add JSON-PATCH support
+        if (req.is('application/json-patch+json')) {
+          if (store.jsonPatch) {
+            return store.jsonPatch(id, body);
+          }
+          throw new UnsupportedMediaTypeError('JSON PATCH is not implemented yet');
+        }
+
+        if (store.shallowUpdate) {
+          return store.shallowUpdate(id, body);
+        }
+
+        // Do a shallow update if JSON-PATCH was no specified
+        const patched = { ...document, ...body };
+        return store.replace(id, patched);
+      });
   },
 
   destroy: (resource: Resource) => {

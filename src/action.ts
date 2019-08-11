@@ -25,8 +25,13 @@ export interface IActionBindParameters {
 }
 
 export class ActionArguments {
+  private _req: express.Request;
   private _store?: IStore;
   private _body?: any;
+
+  get req(): express.Request {
+    return this._req;
+  }
 
   get store(): IStore {
     if (!this._store) {
@@ -42,10 +47,16 @@ export class ActionArguments {
     return this._body;
   }
 
-  constructor(store: IStore|null, body: any|null) {
+  constructor(req: express.Request, store: IStore|null, body: any|null) {
+    if (!req) {
+      throw new Error('req is required');
+    }
+    this._req = req;
+
     if (store) {
       this._store = store;
     }
+
     if (body) {
       this._body = body;
     }
@@ -67,8 +78,8 @@ export class InstanceActionArguments extends ActionArguments {
     return this._document;
   }
 
-  constructor(store: IStore|null, id: string, document: any|null, body: any|null) {
-    super(store, body);
+  constructor(req: express.Request, store: IStore|null, id: string, document: any|null, body: any|null) {
+    super(req, store, body);
     this._id = id;
     this._document = document;
   }
@@ -313,7 +324,7 @@ export class CollectionAction extends Action {
         throw new ForbiddenError();
       }
 
-      const args = new ActionArguments(this._resource.initialized.store, body);
+      const args = new ActionArguments(req, this._resource.initialized.store, body);
       let result = await this._handler(args);
 
       return this._finalizeResponse(session, validator, result);
@@ -348,8 +359,17 @@ export class InstanceAction extends Action {
     return this;
   }
 
-  /** Enable or disable loading of the instance before executing the handler callback */
-  autoload(value: boolean): InstanceAction {
+  /**
+   * Enable or disable loading of the instance before executing the handler callback. Defaults
+   * to `true` for all instance actions.
+   *
+   * Not that setting this to `false` means {@link Session#authorizeDocumentAction} will not be
+   * called as there is no loaded document to authorize against, so you will rely solely on
+   * {@link Session#preAuthorizeDocumentAction} for access control.
+   *
+   * @param value `true` or `false`.
+   */
+  loadsExisting(value: boolean): InstanceAction {
     this._autoload = value;
     return this;
   }
@@ -410,6 +430,7 @@ export class InstanceAction extends Action {
       }
 
       let result: object = await this._handler(new InstanceActionArguments(
+        req,
         this._resource.initialized.store,
         id.toString(),
         document,

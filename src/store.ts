@@ -14,9 +14,9 @@ export interface IStore {
   read: (id: string) => Promise<object|null>;
 
   /**
-   * Replace an existing instance of an object with a new version.
+   * Replace an existing instance of an object with a new version, returning the new version.
    */
-  update: (id: string, instance: any) => Promise<object>;
+  replace: (id: string, instance: any) => Promise<object>;
 
   /**
    * Delete an existing instance.
@@ -29,4 +29,14 @@ export interface IStore {
    * Should resolve to an object keyed by each document's primary key as a string.
    */
   list: (query: any) => Promise<object>;
+
+  /**
+   * Optional optimized shallow update that receives just the fields to be updated.
+   */
+  shallowUpdate?: (id: string, updates: object) => Promise<object>;
+
+  /**
+   * Optional optimized JSON-PATCH which receives just the patch object.
+   */
+  jsonPatch?: (id: string, patch: object) => Promise<object>;
 }

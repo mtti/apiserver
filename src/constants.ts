@@ -3,7 +3,7 @@ import { DefaultActionName, HttpMethod } from './types';
 /** Regular expression for valid resource names */
 export const RESOURCE_NAME_PATTERN = /^[a-z\-]+$/i
 
-export const ALL_DEFAULT_ACTIONS: DefaultActionName[] = ['create', 'read', 'update', 'destroy', 'list'];
+export const ALL_DEFAULT_ACTIONS: DefaultActionName[] = ['create', 'read', 'replace', 'destroy', 'list'];
 
 /** List of HTTP methods an action can be configured to use. */
 export const SUPPORTED_HTTP_METHODS: HttpMethod[] = [ 'GET', 'POST', 'PUT', 'PATCH', 'DELETE' ];
