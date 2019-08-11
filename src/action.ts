@@ -46,6 +46,9 @@ export class ActionArguments {
     if (store) {
       this._store = store;
     }
+    if (body) {
+      this._body = body;
+    }
   }
 }
 
@@ -301,7 +304,7 @@ export class CollectionAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = session.filterDocumentRequest(this._resource, body);
+          body = await session.filterDocumentRequest(this._resource, body);
         }
       }
 
@@ -385,7 +388,7 @@ export class InstanceAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = session.filterDocumentRequest(this._resource, body);
+          body = await session.filterDocumentRequest(this._resource, body);
         }
       }
 
@@ -396,7 +399,7 @@ export class InstanceAction extends Action {
 
       let document: object|null = null;
       if (this._autoload) {
-        document = store.read(id);
+        document = await store.read(id);
         if (document === null) {
           throw new NotFoundError();
         }
