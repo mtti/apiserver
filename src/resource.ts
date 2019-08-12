@@ -5,6 +5,8 @@ import { Uuid } from './uuid';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { CollectionAction, InstanceAction } from './action';
 import { UnsupportedMediaTypeError } from './errors';
+import { suffixUrlFilename } from './utils';
+import { getJsonApiDataEnvelopeSchema } from './json-api';
 
 export class Resource {
   private _name: string;
@@ -35,6 +37,27 @@ export class Resource {
     return this._documentSchemaId;
   }
 
+  /**
+   * Does the resource have a document schema?
+   */
+  get hasDocumentSchema(): boolean {
+    return !!this._documentSchemaId;
+  }
+
+  get collectionResponseSchemaId(): string {
+    if (!this._documentSchemaId) {
+      throw new Error('No document schema ID set');
+    }
+    return suffixUrlFilename(this._documentSchemaId, '-collection-response');
+  }
+
+  get documentResponseSchemaId(): string {
+    if (!this._documentSchemaId) {
+      throw new Error('No document schema ID set');
+    }
+    return suffixUrlFilename(this._documentSchemaId, '-document-response');
+  }
+
   get schemas(): object[] {
     return [...this._jsonSchemas];
   }
@@ -61,7 +84,7 @@ export class Resource {
         throw new Error('Schema has not $id');
       }
       this._documentSchemaId = schema['$id'];
-      this.addSchemas([ schema ]);
+      this.addSchemas([ schema, ...this.generateResponseSchemas() ]);
     }
   }
 
@@ -132,6 +155,36 @@ export class Resource {
     }
 
     return router;
+  }
+
+  /**
+   * Generate schemas for JSON:API compliant response envelopes.
+   */
+  private generateResponseSchemas(): object[] {
+    if (!this._documentSchemaId) {
+      return [];
+    }
+
+    const collectionResponseSchema = {
+      $id: this.collectionResponseSchemaId,
+      type: 'object',
+      properties: {
+        data: {
+          type: 'array',
+          items: getJsonApiDataEnvelopeSchema(this._documentSchemaId, this.slug),
+        },
+      },
+    };
+
+    const documentResponseSchema = {
+      $id: this.documentResponseSchemaId,
+      type: 'object',
+      properties: {
+        data: getJsonApiDataEnvelopeSchema(this._documentSchemaId, this.slug),
+      }
+    };
+
+    return [collectionResponseSchema, documentResponseSchema];
   }
 }
 
