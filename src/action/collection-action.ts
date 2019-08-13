@@ -1,5 +1,4 @@
 import express = require('express');
-import { Emitter } from '../emitter';
 import { BadRequestError, ForbiddenError } from '../errors';
 import { wrapHandler } from '../handler';
 import { Resource } from '../resource';
@@ -8,16 +7,29 @@ import { IDependencies } from '../types';
 import { Validator } from '../validator';
 import { Action, ActionArguments } from './action';
 
-export type CollectionActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter>;
+export type CollectionActionHandler<T> = (args: ActionArguments<T>) => Promise<object>;
 
 export class CollectionAction<T> extends Action<T> {
-  private _handler: CollectionActionHandler<T> = async ({ emit }) => emit.raw({});
+  private _handler: CollectionActionHandler<T> = async () => ({});
 
   constructor(resource: Resource<T>, name: string) {
     super(resource, name);
   }
 
-  handler(handler: CollectionActionHandler<T>): this {
+  respondsWithRaw(handler: CollectionActionHandler<T>): this {
+    this.respondsWithType('raw');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithDocument(handler: CollectionActionHandler<T>): this {
+    this.respondsWithType('document');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithCollection(handler: CollectionActionHandler<T>): this {
+    this.respondsWithType('collection');
     this._handler = handler;
     return this;
   }
@@ -62,11 +74,10 @@ export class CollectionAction<T> extends Action<T> {
         throw new ForbiddenError();
       }
 
-      const emitter = new Emitter(this._resource, session);
-      const args = new ActionArguments(req, this._resource.initialized.store, emitter, body);
-      await this._handler(args);
+      const args = new ActionArguments(req, this._resource.initialized.store, body);
+      const response = await this._handler(args);
 
-      return this._finalizeResponse(session, validator, emitter.response);
+      return this._finalizeResponse(session, validator, response);
     });
   }
 }

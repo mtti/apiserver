@@ -1,5 +1,4 @@
 import express = require('express');
-import { Emitter } from '../emitter';
 import { ForbiddenError, NotFoundError } from '../errors';
 import { wrapHandler } from '../handler';
 import { Resource } from '../resource';
@@ -9,7 +8,7 @@ import { IDependencies } from '../types';
 import { Validator } from '../validator';
 import { Action, ActionArguments } from './action';
 
-export type InstanceActionHandler<T> = (args: InstanceActionArguments<T>) => Promise<Emitter>;
+export type InstanceActionHandler<T> = (args: InstanceActionArguments<T>) => Promise<object>;
 
 export class InstanceActionArguments<T> extends ActionArguments<T> {
   private _id: string;
@@ -26,15 +25,15 @@ export class InstanceActionArguments<T> extends ActionArguments<T> {
     return this._document;
   }
 
-  constructor(req: express.Request, store: IStore<T>|null, id: string, document: any|null, emitter: Emitter, body: any|null) {
-    super(req, store, emitter, body);
+  constructor(req: express.Request, store: IStore<T>|null, id: string, document: any|null, body: any|null) {
+    super(req, store, body);
     this._id = id;
     this._document = document;
   }
 }
 
 export class InstanceAction<T> extends Action<T> {
-  private _handler: InstanceActionHandler<T> = async ({ emit }) => emit.raw({});
+  private _handler: InstanceActionHandler<T> = async () => ({});
   private _autoload: boolean = true;
 
   constructor(resource: Resource<T>, name: string) {
@@ -42,7 +41,20 @@ export class InstanceAction<T> extends Action<T> {
     this._basePath = '/:id';
   }
 
-  handler(handler: InstanceActionHandler<T>): this {
+  respondsWithRaw(handler: InstanceActionHandler<T>): this {
+    this.respondsWithType('raw');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithDocument(handler: InstanceActionHandler<T>): this {
+    this.respondsWithType('document');
+    this._handler = handler;
+    return this;
+  }
+
+  respondsWithCollection(handler: InstanceActionHandler<T>): this {
+    this.respondsWithType('collection');
     this._handler = handler;
     return this;
   }
@@ -117,16 +129,14 @@ export class InstanceAction<T> extends Action<T> {
         }
       }
 
-      const emitter = new Emitter(this._resource, session);
-      await this._handler(new InstanceActionArguments(
+      const response = await this._handler(new InstanceActionArguments(
         req,
         this._resource.initialized.store,
         id.toString(),
         document,
-        emitter,
         body
       ));
-      return this._finalizeResponse(session, validator, emitter.response);
+      return this._finalizeResponse(session, validator, response);
     });
   }
 }

@@ -1,9 +1,8 @@
 import express = require('express');
 import * as bodyParser from 'body-parser';
-import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
-import { Emitter } from '../emitter';
+import { ACTION_RESPONSE_TYPES, SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
 import { Resource } from '../resource';
-import { IDependencies, HttpMethod } from '../types';
+import { ActionResponseType, IDependencies, HttpMethod } from '../types';
 import { Session } from '../session';
 import { IStore } from '../store';
 import { Validator } from '../validator';
@@ -13,7 +12,6 @@ const jsonParser = bodyParser.json();
 export class ActionArguments<T> {
   private _req: express.Request;
   private _store?: IStore<T>;
-  private _emitter: Emitter;
   private _body?: any;
 
   get req(): express.Request {
@@ -27,10 +25,6 @@ export class ActionArguments<T> {
     return this._store;
   }
 
-  get emit(): Emitter {
-    return this._emitter;
-  }
-
   get body(): any {
     if (!this._body) {
       throw new Error('No body');
@@ -38,7 +32,7 @@ export class ActionArguments<T> {
     return this._body;
   }
 
-  constructor(req: express.Request, store: IStore<T>|null, emitter:Emitter, body: any|null) {
+  constructor(req: express.Request, store: IStore<T>|null, body: any|null) {
     if (!req) {
       throw new Error('req is required');
     }
@@ -47,8 +41,6 @@ export class ActionArguments<T> {
     if (store) {
       this._store = store;
     }
-
-    this._emitter = emitter;
 
     if (body) {
       this._body = body;
@@ -67,6 +59,7 @@ export abstract class Action<T> {
   protected _requestIsDocument: boolean = true;
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
+  protected _responseFilter: ActionResponseType = 'document';
 
   get path(): string {
     let result = this._basePath;
@@ -163,6 +156,31 @@ export abstract class Action<T> {
     return this;
   }
 
+  /**
+   * Set the action's response type. This affects what kind of automatic filtering is applied
+   * to the object returned by the handler.
+   *
+   * For `raw`, no filtering is done.
+   *
+   * For `document`, all first-level fields are filtered with `Session.filterDocumentResponse` to
+   * omit any fields that the user is not authorized to read. This is the default.
+   *
+   * For `collection`, the returned object is assumed to contain zero or more documents indexed
+   * by their primary key and each first-level value will be filtered as a `document`.
+   *
+   * @param value The type of object the action sends in response to requests. One of `raw`,
+   * `collection` or `document`. Defaults to `document`.
+   */
+  respondsWithType(value: ActionResponseType): this {
+    if (!ACTION_RESPONSE_TYPES.includes(value)) {
+      throw new TypeError(
+        `Invalid action response type: ${value}, must be one of ${ACTION_RESPONSE_TYPES.join(',')}`
+      );
+    }
+    this._responseFilter = value;
+    return this;
+  }
+
   /** Bind the action to an express router */
   bind(router: express.Router, dependencies: IDependencies) {
     const routePath = this.path;
@@ -192,6 +210,16 @@ export abstract class Action<T> {
       validator.assertResponse(this._responseContract, response);
     }
 
-    return response;
+    let filtered: object = { ...response };
+
+    // If this an individual document or a collection, filter out fields the session is not allowed
+    // to read.
+    if (this._responseFilter === 'document') {
+      filtered = await session.filterReadAttributes(this._resource, response);
+    } else if (this._responseFilter === 'collection') {
+      filtered = await session.filterCollectionResponse(this._resource, response);
+    }
+
+    return filtered;
   }
 }
