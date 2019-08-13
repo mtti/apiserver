@@ -16,18 +16,18 @@ export type ActionResponseType = 'raw' | 'document' | 'collection';
 
 export const ACTION_RESPONSE_TYPES: ActionResponseType[] = [ 'raw', 'document', 'collection' ];
 
-export type CollectionActionHandler = (args: ActionArguments) => Promise<Emitter>;
+export type CollectionActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter>;
 
-export type InstanceActionHandler = (args: InstanceActionArguments) => Promise<Emitter>;
+export type InstanceActionHandler<T> = (args: InstanceActionArguments<T>) => Promise<Emitter>;
 
-export interface IActionBindParameters {
-  store: IStore;
+export interface IActionBindParameters<T> {
+  store: IStore<T>;
   validator: Validator;
 }
 
-export class ActionArguments {
+export class ActionArguments<T> {
   private _req: express.Request;
-  private _store?: IStore;
+  private _store?: IStore<T>;
   private _emitter: Emitter;
   private _body?: any;
 
@@ -35,7 +35,7 @@ export class ActionArguments {
     return this._req;
   }
 
-  get store(): IStore {
+  get store(): IStore<T> {
     if (!this._store) {
       throw new Error('No store');
     }
@@ -53,7 +53,7 @@ export class ActionArguments {
     return this._body;
   }
 
-  constructor(req: express.Request, store: IStore|null, emitter:Emitter, body: any|null) {
+  constructor(req: express.Request, store: IStore<T>|null, emitter:Emitter, body: any|null) {
     if (!req) {
       throw new Error('req is required');
     }
@@ -71,7 +71,7 @@ export class ActionArguments {
   }
 }
 
-export class InstanceActionArguments extends ActionArguments {
+export class InstanceActionArguments<T> extends ActionArguments<T> {
   private _id: string;
   private _document?: any;
 
@@ -86,7 +86,7 @@ export class InstanceActionArguments extends ActionArguments {
     return this._document;
   }
 
-  constructor(req: express.Request, store: IStore|null, id: string, document: any|null, emitter: Emitter, body: any|null) {
+  constructor(req: express.Request, store: IStore<T>|null, id: string, document: any|null, emitter: Emitter, body: any|null) {
     super(req, store, emitter, body);
     this._id = id;
     this._document = document;
@@ -94,8 +94,8 @@ export class InstanceActionArguments extends ActionArguments {
 }
 
 /** Base class for collection and instance actions */
-export abstract class Action {
-  protected _resource: Resource;
+export abstract class Action<T> {
+  protected _resource: Resource<T>;
   protected _name: string;
   protected _method: HttpMethod = 'POST';
   protected _hasRequestBody: boolean = true;
@@ -118,7 +118,7 @@ export abstract class Action {
     return result;
   }
 
-  constructor(resource: Resource, name: string) {
+  constructor(resource: Resource<T>, name: string) {
     this._resource = resource;
     this._name = name;
     this._suffix = name;
@@ -233,14 +233,14 @@ export abstract class Action {
   }
 }
 
-export class CollectionAction extends Action {
-  private _handler: CollectionActionHandler = async ({ emit }) => emit.raw({});
+export class CollectionAction<T> extends Action<T> {
+  private _handler: CollectionActionHandler<T> = async ({ emit }) => emit.raw({});
 
-  constructor(resource: Resource, name: string) {
+  constructor(resource: Resource<T>, name: string) {
     super(resource, name);
   }
 
-  handler(handler: CollectionActionHandler): this {
+  handler(handler: CollectionActionHandler<T>): this {
     this._handler = handler;
     return this;
   }
@@ -276,7 +276,7 @@ export class CollectionAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = await session.filterDocumentRequest(this._resource, body);
+          body = await session.filterReadAttributes(this._resource, body);
         }
       }
 
@@ -294,16 +294,16 @@ export class CollectionAction extends Action {
   }
 }
 
-export class InstanceAction extends Action {
-  private _handler: InstanceActionHandler = async ({ emit }) => emit.raw({});
+export class InstanceAction<T> extends Action<T> {
+  private _handler: InstanceActionHandler<T> = async ({ emit }) => emit.raw({});
   private _autoload: boolean = true;
 
-  constructor(resource: Resource, name: string) {
+  constructor(resource: Resource<T>, name: string) {
     super(resource, name);
     this._basePath = '/:id';
   }
 
-  handler(handler: InstanceActionHandler): this {
+  handler(handler: InstanceActionHandler<T>): this {
     this._handler = handler;
     return this;
   }
@@ -318,7 +318,7 @@ export class InstanceAction extends Action {
    *
    * @param value `true` or `false`.
    */
-  loadsExisting(value: boolean): InstanceAction {
+  loadsExisting(value: boolean): InstanceAction<T> {
     this._autoload = value;
     return this;
   }
@@ -357,7 +357,7 @@ export class InstanceAction extends Action {
         }
 
         if (this._requestIsDocument) {
-          body = await session.filterDocumentRequest(this._resource, body);
+          body = await session.filterReadAttributes(this._resource, body);
         }
       }
 

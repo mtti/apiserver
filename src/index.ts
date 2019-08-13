@@ -7,3 +7,4 @@ export * from './uuid';
 export * from './resource';
 export * from './handler';
 export * from './types';
+export * from './document';

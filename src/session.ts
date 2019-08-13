@@ -15,7 +15,7 @@ export abstract class Session {
    *
    * @param resource The resource being accessed
    */
-  async preAuthorizeResource(resource: Resource): Promise<boolean> {
+  async preAuthorizeResource<T>(resource: Resource<T>): Promise<boolean> {
     return true;
   }
 
@@ -26,7 +26,7 @@ export abstract class Session {
    * @param action Name of the action
    * @param body The request body, if any
    */
-  async authorizeCollectionAction(resource: Resource, action: string, body?: any): Promise<boolean> {
+  async authorizeCollectionAction<T>(resource: Resource<T>, action: string, body?: any): Promise<boolean> {
     return true;
   }
 
@@ -39,7 +39,7 @@ export abstract class Session {
    * @param id ID of the document on which the action is being performed
    * @param body Request body, if any
    */
-  async preAuthorizeDocumentAction(resource: Resource, action: string, id: string, body?: object): Promise<boolean> {
+  async preAuthorizeDocumentAction<T>(resource: Resource<T>, action: string, id: string, body?: object): Promise<boolean> {
     return true;
   }
 
@@ -52,17 +52,17 @@ export abstract class Session {
    * @param document The loaded document on which the action is being performed
    * @param body Request body, if any
    */
-  async authorizeDocumentAction(resource: Resource, action: string, id: string, document: object, body?: any): Promise<boolean> {
+  async authorizeDocumentAction<T>(resource: Resource<T>, action: string, id: string, document: object, body?: any): Promise<boolean> {
     return true;
   }
 
   /** Filter fields from an incoming document */
-  async filterDocumentRequest(resource: Resource, document: object): Promise<object> {
+  async filterWriteAttributes<T>(resource: Resource<T>, document: object): Promise<object> {
     return { ...document };
   }
 
   /** Filter fields from an outgoing document  */
-  async filterDocumentResponse(resource: Resource, document: object): Promise<object> {
+  async filterReadAttributes<T>(resource: Resource<T>, document: object): Promise<object> {
     return { ...document };
   }
 
@@ -70,9 +70,9 @@ export abstract class Session {
    * Filters every document in a collection. Usually should not need to be overridden: the default
    * implementation works by calling filterDocumentResponse for every document in the collection
    * */
-  async filterCollectionResponse(resource: Resource, collection: object): Promise<object> {
+  async filterCollectionResponse<T>(resource: Resource<T>, collection: object): Promise<object> {
     const promises = Object.entries(collection).map(async ([id, document]) => {
-      const filteredDocument = await this.filterDocumentResponse(resource, document);
+      const filteredDocument = await this.filterReadAttributes(resource, document);
       return { [id]: filteredDocument };
     });
 

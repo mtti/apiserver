@@ -20,7 +20,7 @@ export class Emitter {
 
   public async document(response: object): Promise<this> {
     this.assertNotEmitted();
-    this._response = await this._session.filterDocumentRequest(this._resource, response);
+    this._response = await this._session.filterWriteAttributes(this._resource, response);
     return this;
   }
 
