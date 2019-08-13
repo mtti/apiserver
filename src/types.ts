@@ -1,4 +1,4 @@
-import { IStore } from './store';
+export type ActionResponseType = 'raw' | 'document' | 'collection';
 
 export type DefaultActionName = 'create' | 'read' | 'replace' | 'patch' | 'destroy' | 'list';
 
