@@ -197,6 +197,8 @@ export abstract class Action<T> {
       router.post(routePath, ...handlers);
     } else if (this._method === 'PUT') {
       router.put(routePath, ...handlers);
+    } else if (this._method === 'PATCH') {
+      router.patch(routePath, ...handlers);
     } else if (this._method === 'DELETE') {
       router.delete(routePath, ...handlers);
     }
