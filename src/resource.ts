@@ -1,7 +1,7 @@
 import express = require('express');
 import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
-import { getJsonApiDataEnvelopeSchema } from './json-api';
+import { createJsonApiDocumentResponseSchema, createJsonApiDocumentRequestSchema } from './json-api';
 import { IStore, StoreFactory } from './store';
 import { DefaultActionName, IDependencies } from './types';
 import { suffixUrlFilename } from './utils';
@@ -40,6 +40,13 @@ export class Resource<T = any> {
    */
   get hasDocumentSchema(): boolean {
     return !!this._documentSchemaId;
+  }
+
+  get documentRequestSchemaId(): string {
+    if (!this._documentSchemaId) {
+      throw new Error('No document schema ID set');
+    }
+    return suffixUrlFilename(this._documentSchemaId, '-document-request');
   }
 
   get collectionResponseSchemaId(): string {
@@ -82,7 +89,7 @@ export class Resource<T = any> {
         throw new Error('Schema has not $id');
       }
       this._documentSchemaId = schema['$id'];
-      this.addSchemas([ schema, ...this.generateResponseSchemas() ]);
+      this.addSchemas([ schema ]);
     }
   }
 
@@ -90,6 +97,8 @@ export class Resource<T = any> {
     if (this._initialized) {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
+
+    this.addSchemas([ ...this.generateResponseSchemas() ]);
 
     let store: IStore<T>|null = null;
     if (this._storeFactory) {
@@ -166,13 +175,21 @@ export class Resource<T = any> {
       return [];
     }
 
+    const documentRequestSchema = {
+      $id: this.documentRequestSchemaId,
+      type: 'object',
+      properties: {
+        data: createJsonApiDocumentRequestSchema(this._documentSchemaId, this.slug),
+      }
+    };
+
     const collectionResponseSchema = {
       $id: this.collectionResponseSchemaId,
       type: 'object',
       properties: {
         data: {
           type: 'array',
-          items: getJsonApiDataEnvelopeSchema(this._documentSchemaId, this.slug),
+          items: createJsonApiDocumentResponseSchema(this._documentSchemaId, this.slug),
         },
       },
     };
@@ -181,11 +198,11 @@ export class Resource<T = any> {
       $id: this.documentResponseSchemaId,
       type: 'object',
       properties: {
-        data: getJsonApiDataEnvelopeSchema(this._documentSchemaId, this.slug),
+        data: createJsonApiDocumentResponseSchema(this._documentSchemaId, this.slug),
       }
     };
 
-    return [collectionResponseSchema, documentResponseSchema];
+    return [documentRequestSchema, collectionResponseSchema, documentResponseSchema];
   }
 }
 

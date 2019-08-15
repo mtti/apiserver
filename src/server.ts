@@ -1,5 +1,3 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import express = require('express');
 import { errorHandler, notFoundHandler } from './error-handler';
 import { Resource } from './resource';
@@ -82,12 +80,12 @@ export class ApiServer {
     for (let resource of this._resources) {
       collections.push(resource.slug);
 
-      this._validator.addSchema(resource.schemas);
-
       const initializedResource = resource.initialize(dependencies);
       if (initializedResource.hasStore) {
         dependencies.stores[resource.name] = initializedResource.store;
       }
+
+      this._validator.addSchema(resource.schemas);
     }
 
     // Initialize actions and custom routes

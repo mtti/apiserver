@@ -42,6 +42,22 @@ export class ApiError extends Error {
 
     return result;
   }
+
+  public toJsonApi(): object {
+    const result = {
+      status: this._status,
+      title: this.message,
+      meta: {},
+    };
+
+    if (process.env.NODE_ENV !== 'production') {
+      result.meta = {
+        stack: this.stack,
+      };
+    }
+
+    return result;
+  }
 }
 
 export class BadRequestError extends ApiError {

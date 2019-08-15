@@ -1,8 +1,12 @@
-import { ActionResponseType, DefaultActionName, HttpMethod } from './types';
+import { DefaultActionName, HttpMethod } from './types';
 
-export const ACTION_RESPONSE_TYPES: ActionResponseType[] = [ 'raw', 'document', 'collection' ];
-
-export const ALL_DEFAULT_ACTIONS: DefaultActionName[] = ['create', 'read', 'replace', 'destroy', 'list'];
+export const ALL_DEFAULT_ACTIONS: DefaultActionName[] = [
+  'create',
+  'read',
+  'replace',
+  'destroy',
+  'list'
+];
 
 /** HTTP methods which will be by default assumed by actions to have a request body */
 export const METHODS_WITH_BODY: HttpMethod[] = ['POST', 'PUT', 'PATCH'];

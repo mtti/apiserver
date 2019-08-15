@@ -18,3 +18,12 @@ export function suffixUrlFilename(original: string, suffix: string): string {
 
   return originalUrl.toString();
 }
+
+/**
+ * Check if `value` is a promise.
+ *
+ * @param value The value to check
+ */
+export function isPromise(value: any): value is Promise<any> {
+  return value && (value as Promise<any>).then !== undefined;
+}

@@ -1,39 +1,19 @@
 import express = require('express');
+import { IDocument } from '../document';
+import { Emitter } from '../emitter';
 import { ForbiddenError, NotFoundError } from '../errors';
 import { wrapHandler } from '../handler';
 import { Resource } from '../resource';
 import { SessionParser } from '../session';
-import { IStore } from '../store';
 import { IDependencies } from '../types';
 import { Validator } from '../validator';
-import { Action, ActionArguments } from './action';
+import { Action } from './action';
+import { ActionArguments } from './action-arguments'
 
-export type InstanceActionHandler<T> = (args: InstanceActionArguments<T>) => Promise<object>;
-
-export class InstanceActionArguments<T> extends ActionArguments<T> {
-  private _id: string;
-  private _document?: any;
-
-  get id(): string {
-    return this._id;
-  }
-
-  get document(): any {
-    if (!this._document) {
-      throw new Error('No document');
-    }
-    return this._document;
-  }
-
-  constructor(req: express.Request, store: IStore<T>|null, id: string, document: any|null, body: any|null) {
-    super(req, store, body);
-    this._id = id;
-    this._document = document;
-  }
-}
+export type InstanceActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
 
 export class InstanceAction<T> extends Action<T> {
-  private _handler: InstanceActionHandler<T> = async () => ({});
+  private _handler: InstanceActionHandler<T> = async ({ emit }) => emit.raw({});
   private _autoload: boolean = true;
 
   constructor(resource: Resource<T>, name: string) {
@@ -41,20 +21,7 @@ export class InstanceAction<T> extends Action<T> {
     this._basePath = '/:id';
   }
 
-  respondsWithRaw(handler: InstanceActionHandler<T>): this {
-    this.respondsWithType('raw');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithDocument(handler: InstanceActionHandler<T>): this {
-    this.respondsWithType('document');
-    this._handler = handler;
-    return this;
-  }
-
-  respondsWithCollection(handler: InstanceActionHandler<T>): this {
-    this.respondsWithType('collection');
+  respondsWith(handler: InstanceActionHandler<T>): this {
     this._handler = handler;
     return this;
   }
@@ -91,52 +58,34 @@ export class InstanceAction<T> extends Action<T> {
     const store = this._resource.initialized.store;
 
     return wrapHandler(async (req: express.Request, res: express.Response) => {
-      const id = req.params.id;
       const session = await getSession(req);
+      const params = await this._prepareRequest(validator, session, req);
 
-      // Authorize general access to the collection
-      if (!(await session.preAuthorizeResource(this._resource))) {
-        throw new ForbiddenError();
-      }
-
-      let body: any = null;
-      if (this._hasRequestBody) {
-        body = req.body;
-
-        if (this._requestContract) {
-          validator.assertRequestBody<any>(this._requestContract, body);
-        }
-
-        if (this._requestIsDocument) {
-          body = await session.filterReadAttributes(this._resource, body);
-        }
-      }
+      // TODO: Validate ID
+      const id = req.params.id;
+      params.id = req.params.id;
 
       // Initial authorization before the target document is loaded
-      if (!(await session.preAuthorizeDocumentAction(this._resource, this._name, id, body))) {
+      if (!(await session.preAuthorizeDocumentAction(this._resource, this._name, id, params.requestBody))) {
         throw new ForbiddenError();
       }
 
-      let document: object|null = null;
+      // Load and authorize against existing document if autoloading is enabled
+      let document: IDocument<T>|null = null;
       if (this._autoload) {
         document = await store.read(id);
         if (document === null) {
           throw new NotFoundError();
         }
-
-        if (!(await session.authorizeDocumentAction(this._resource, this._name, id, document, body))) {
+        if (!(await session.authorizeDocumentAction(this._resource, this._name, id, document, params.requestBody))) {
           throw new ForbiddenError();
         }
       }
+      params.existingDocument = document;
 
-      const response = await this._handler(new InstanceActionArguments(
-        req,
-        this._resource.initialized.store,
-        id.toString(),
-        document,
-        body
-      ));
-      return this._finalizeResponse(session, validator, response);
+      await this._handler(new ActionArguments<T>(params));
+
+      return params.emitter.response;
     });
   }
 }

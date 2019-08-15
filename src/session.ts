@@ -57,29 +57,14 @@ export abstract class Session {
   }
 
   /** Filter fields from an incoming document */
-  async filterWriteAttributes<T>(resource: Resource<T>, document: object): Promise<object> {
-    return { ...document };
+  async filterWriteAttributes<T>(resource: Resource<T>, attributes: T): Promise<T> {
+    return { ...attributes };
   }
 
   /** Filter fields from an outgoing document  */
-  async filterReadAttributes<T>(resource: Resource<T>, document: object): Promise<object> {
-    return { ...document };
+  async filterReadAttributes<T>(resource: Resource<T>, attributes: T): Promise<T> {
+    return { ...attributes };
   }
-
-  /**
-   * Filters every document in a collection. Usually should not need to be overridden: the default
-   * implementation works by calling filterDocumentResponse for every document in the collection
-   * */
-  async filterCollectionResponse<T>(resource: Resource<T>, collection: object): Promise<object> {
-    const promises = Object.entries(collection).map(async ([id, document]) => {
-      const filteredDocument = await this.filterReadAttributes(resource, document);
-      return { [id]: filteredDocument };
-    });
-
-    return (await Promise.all(promises)).reduce((acc, pair) => {
-      return { ...acc, ...pair };
-    }, {} as {[x: string]: object});
-  };
 }
 
 /**

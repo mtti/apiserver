@@ -1,52 +1,17 @@
 import express = require('express');
 import * as bodyParser from 'body-parser';
-import { ACTION_RESPONSE_TYPES, SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
+import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
+import { RequestDocument } from '../document';
+import { Emitter } from '../emitter';
+import { BadRequestError, ForbiddenError } from '../errors';
+import { JsonApiRequestEnvelope } from '../json-api';
 import { Resource } from '../resource';
-import { ActionResponseType, IDependencies, HttpMethod } from '../types';
+import { IDependencies, HttpMethod } from '../types';
 import { Session } from '../session';
-import { IStore } from '../store';
 import { Validator } from '../validator';
+import { ActionArgumentParams } from './action-arguments';
 
 const jsonParser = bodyParser.json();
-
-export class ActionArguments<T> {
-  private _req: express.Request;
-  private _store?: IStore<T>;
-  private _body?: any;
-
-  get req(): express.Request {
-    return this._req;
-  }
-
-  get store(): IStore<T> {
-    if (!this._store) {
-      throw new Error('No store');
-    }
-    return this._store;
-  }
-
-  get body(): any {
-    if (!this._body) {
-      throw new Error('No body');
-    }
-    return this._body;
-  }
-
-  constructor(req: express.Request, store: IStore<T>|null, body: any|null) {
-    if (!req) {
-      throw new Error('req is required');
-    }
-    this._req = req;
-
-    if (store) {
-      this._store = store;
-    }
-
-    if (body) {
-      this._body = body;
-    }
-  }
-}
 
 /** Base class for collection and instance actions */
 export abstract class Action<T> {
@@ -59,7 +24,6 @@ export abstract class Action<T> {
   protected _requestIsDocument: boolean = true;
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
-  protected _responseFilter: ActionResponseType = 'document';
 
   get path(): string {
     let result = this._basePath;
@@ -156,31 +120,6 @@ export abstract class Action<T> {
     return this;
   }
 
-  /**
-   * Set the action's response type. This affects what kind of automatic filtering is applied
-   * to the object returned by the handler.
-   *
-   * For `raw`, no filtering is done.
-   *
-   * For `document`, all first-level fields are filtered with `Session.filterDocumentResponse` to
-   * omit any fields that the user is not authorized to read. This is the default.
-   *
-   * For `collection`, the returned object is assumed to contain zero or more documents indexed
-   * by their primary key and each first-level value will be filtered as a `document`.
-   *
-   * @param value The type of object the action sends in response to requests. One of `raw`,
-   * `collection` or `document`. Defaults to `document`.
-   */
-  respondsWithType(value: ActionResponseType): this {
-    if (!ACTION_RESPONSE_TYPES.includes(value)) {
-      throw new TypeError(
-        `Invalid action response type: ${value}, must be one of ${ACTION_RESPONSE_TYPES.join(',')}`
-      );
-    }
-    this._responseFilter = value;
-    return this;
-  }
-
   /** Bind the action to an express router */
   bind(router: express.Router, dependencies: IDependencies) {
     const routePath = this.path;
@@ -204,24 +143,72 @@ export abstract class Action<T> {
     }
   }
 
+  /**
+   * Create the action's express handler.
+   *
+   * @param dependencies
+   */
   protected abstract _createRoute(dependencies: IDependencies): express.RequestHandler;
 
-  protected async _finalizeResponse(session: Session, validator: Validator, response: object): Promise<object> {
-    // If a response contract is specified, make sure the response conforms to it
-    if (this._responseContract) {
-      validator.assertResponse(this._responseContract, response);
+  /**
+   * Perform some prepartions and validation common to both collection and instance actions.
+   *
+   * @param validator
+   * @param session
+   * @param req
+   */
+  protected async _prepareRequest(
+    validator: Validator,
+    session: Session,
+    req: express.Request
+  ): Promise<ActionArgumentParams<T>> {
+    // Authorize general access to the collection
+    if (!(await session.preAuthorizeResource(this._resource))) {
+      throw new ForbiddenError();
     }
 
-    let filtered: object = { ...response };
+    let requestBody: object|null = null;
+    let requestDocument: RequestDocument<T>|null = null;
+    if (this._hasRequestBody) {
+      if (!req.body) {
+        throw new BadRequestError('Missing request body');
+      }
+      requestBody = req.body;
 
-    // If this an individual document or a collection, filter out fields the session is not allowed
-    // to read.
-    if (this._responseFilter === 'document') {
-      filtered = await session.filterReadAttributes(this._resource, response);
-    } else if (this._responseFilter === 'collection') {
-      filtered = await session.filterCollectionResponse(this._resource, response);
+      if (this._requestIsDocument) {
+        // Always validate against the resource's document request schema when the action expects
+        // to receive a document.
+        const envelope = validator.assertRequestBody<JsonApiRequestEnvelope<T>>(
+          this._resource.documentRequestSchemaId,
+          requestBody
+        );
+
+        requestDocument = envelope.data;
+
+        // Type in JSON:API document must match resource slug
+        if (requestDocument.type !== this._resource.slug) {
+          throw new BadRequestError(
+            `Document is '${requestDocument.type}', expected '${this._resource.slug}'`
+          );
+        }
+
+        // All attributes in an incoming document must be writable by the session
+        requestDocument.attributes
+          = await session.filterWriteAttributes<T>(this._resource, requestDocument.attributes);
+      } else if (this._requestContract) {
+        // Action expects something other than a document, so validate agains a custom request
+        // contract if one is specified.
+        requestBody = validator.assertRequestBody<object>(this._requestContract, requestBody);
+      }
     }
 
-    return filtered;
+    const emitter = new Emitter<T>(validator, this._resource, session);
+    return {
+      store: this._resource.initialized.store,
+      emitter,
+      req,
+      requestBody,
+      requestDocument,
+    };
   }
 }
