@@ -1,6 +1,7 @@
 /* tslint:disable:max-classes-per-file */
 
 import Ajv = require('Ajv');
+import { JsonApiError } from './json-api';
 
 export interface IErrorJson {
   message: string;
@@ -43,11 +44,10 @@ export class ApiError extends Error {
     return result;
   }
 
-  public toJsonApi(): object {
-    const result = {
-      status: this._status,
+  public toJsonApi(): JsonApiError[] {
+    const result: JsonApiError = {
+      status: this._status.toString(),
       title: this.message,
-      meta: {},
     };
 
     if (process.env.NODE_ENV !== 'production') {
@@ -56,7 +56,7 @@ export class ApiError extends Error {
       };
     }
 
-    return result;
+    return [ result ];
   }
 }
 

@@ -191,7 +191,19 @@ export class Resource<T = any> {
           type: 'array',
           items: createJsonApiDocumentResponseSchema(this._documentSchemaId, this.slug),
         },
+        meta: {
+          type: 'object',
+          additionalProperties: true,
+        },
+        errors: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: true,
+          }
+        }
       },
+      additionalProperties: false,
     };
 
     const documentResponseSchema = {
