@@ -7,23 +7,15 @@ import { Resource } from '../resource';
 import { SessionParser } from '../session';
 import { IDependencies } from '../types';
 import { Validator } from '../validator';
-import { Action } from './action';
+import { Action, ActionHandler } from './action';
 import { ActionArguments } from './action-arguments'
 
-export type InstanceActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
-
 export class InstanceAction<T> extends Action<T> {
-  private _handler: InstanceActionHandler<T> = async ({ emit }) => emit.raw({});
   private _autoload: boolean = true;
 
   constructor(resource: Resource<T>, name: string) {
     super(resource, name);
     this._basePath = '/:id';
-  }
-
-  respondsWith(handler: InstanceActionHandler<T>): this {
-    this._handler = handler;
-    return this;
   }
 
   /**
@@ -41,7 +33,7 @@ export class InstanceAction<T> extends Action<T> {
     return this;
   }
 
-  protected _createRoute(dependencies: IDependencies) {
+  protected _createRoute(handler: ActionHandler<T>, dependencies: IDependencies) {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -57,7 +49,7 @@ export class InstanceAction<T> extends Action<T> {
     }
     const store = this._resource.initialized.store;
 
-    return wrapHandler(async (req: express.Request, res: express.Response) => {
+    return async (req: express.Request, res: express.Response) => {
       const session = await getSession(req);
       const params = await this._prepareRequest(validator, session, req);
 
@@ -83,9 +75,7 @@ export class InstanceAction<T> extends Action<T> {
       }
       params.existingDocument = document;
 
-      await this._handler(new ActionArguments<T>(params));
-
-      return params.emitter.response;
-    });
+      return (await handler(new ActionArguments<T>(params))).response;
+    };
   }
 }

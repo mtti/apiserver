@@ -1,29 +1,18 @@
 import express = require('express');
-import { Emitter } from '../emitter';
 import { ForbiddenError } from '../errors';
-import { wrapHandler } from '../handler';
 import { Resource } from '../resource';
 import { SessionParser } from '../session';
 import { IDependencies } from '../types';
 import { Validator } from '../validator';
-import { Action } from './action';
+import { Action, ActionHandler } from './action';
 import { ActionArguments } from './action-arguments';
 
-export type CollectionActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
-
 export class CollectionAction<T> extends Action<T> {
-  private _handler: CollectionActionHandler<T> = async ({ emit }) => emit.raw({});
-
   constructor(resource: Resource<T>, name: string) {
     super(resource, name);
   }
 
-  respondsWith(handler: CollectionActionHandler<T>): this {
-    this._handler = handler;
-    return this;
-  }
-
-  protected _createRoute(dependencies: IDependencies) {
+  protected _createRoute(handler: ActionHandler<T>, dependencies: IDependencies) {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -34,7 +23,7 @@ export class CollectionAction<T> extends Action<T> {
     }
     const getSession = dependencies.getSession as SessionParser;
 
-    return wrapHandler(async (req: express.Request, res: express.Response) => {
+    return async (req: express.Request, res: express.Response) => {
       const session = await getSession(req);
 
       const params = await this._prepareRequest(validator, session, req);
@@ -44,9 +33,7 @@ export class CollectionAction<T> extends Action<T> {
         throw new ForbiddenError();
       }
 
-      await this._handler(new ActionArguments(params));
-
-      return params.emitter.response;
-    });
+      return (await handler(new ActionArguments(params))).response;
+    };
   }
 }

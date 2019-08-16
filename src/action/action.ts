@@ -4,14 +4,17 @@ import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
 import { RequestDocument } from '../document';
 import { Emitter } from '../emitter';
 import { BadRequestError, ForbiddenError } from '../errors';
+import { wrapHandler, WrappedRequestHandler } from '../handler';
 import { JsonApiRequestEnvelope } from '../json-api';
 import { Resource } from '../resource';
 import { IDependencies, HttpMethod } from '../types';
 import { Session } from '../session';
 import { Validator } from '../validator';
-import { ActionArgumentParams } from './action-arguments';
+import { ActionArguments, ActionArgumentParams } from './action-arguments';
 
 const jsonParser = bodyParser.json();
+
+export type ActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
 
 /** Base class for collection and instance actions */
 export abstract class Action<T> {
@@ -24,6 +27,7 @@ export abstract class Action<T> {
   protected _requestIsDocument: boolean = true;
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
+  private _handler: ActionHandler<T> = async ({ emit }) => emit.raw({});
 
   get path(): string {
     let result = this._basePath;
@@ -42,6 +46,11 @@ export abstract class Action<T> {
     this._resource = resource;
     this._name = name;
     this._suffix = name;
+  }
+
+  respondsWith(handler: ActionHandler<T>): this {
+    this._handler = handler;
+    return this;
   }
 
   /**
@@ -128,7 +137,7 @@ export abstract class Action<T> {
     if (this._hasRequestBody) {
       handlers.push(jsonParser);
     }
-    handlers.push(this._createRoute(dependencies));
+    handlers.push(wrapHandler(this._createRoute(this._handler, dependencies)));
 
     if (this._method === 'GET') {
       router.get(routePath, ...handlers);
@@ -148,7 +157,10 @@ export abstract class Action<T> {
    *
    * @param dependencies
    */
-  protected abstract _createRoute(dependencies: IDependencies): express.RequestHandler;
+  protected abstract _createRoute(
+    handler: ActionHandler<T>,
+    dependencies: IDependencies
+  ): WrappedRequestHandler;
 
   /**
    * Perform some prepartions and validation common to both collection and instance actions.
