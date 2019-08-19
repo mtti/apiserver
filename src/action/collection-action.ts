@@ -33,7 +33,8 @@ export class CollectionAction<T> extends Action<T> {
         throw new ForbiddenError();
       }
 
-      return (await handler(new ActionArguments(params))).response;
+      await handler(new ActionArguments(params));
+      return params.emitter;
     };
   }
 }

@@ -3,18 +3,24 @@ import * as bodyParser from 'body-parser';
 import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
 import { RequestDocument } from '../document';
 import { Emitter } from '../emitter';
-import { BadRequestError, ForbiddenError } from '../errors';
-import { wrapHandler, WrappedRequestHandler } from '../handler';
-import { JsonApiRequestEnvelope } from '../json-api';
+import { BadRequestError, ForbiddenError, UnsupportedMediaTypeError } from '../errors';
+import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
 import { Resource } from '../resource';
 import { IDependencies, HttpMethod } from '../types';
 import { Session } from '../session';
+import { toArray } from '../utils';
 import { Validator } from '../validator';
 import { ActionArguments, ActionArgumentParams } from './action-arguments';
 
 const jsonParser = bodyParser.json();
 
 export type ActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
+
+export type WrappedActionHandler<T> = (req: express.Request, res: express.Response) => Promise<Emitter<T>>;
+
+export type ActionHandlerMap<T> = {
+  [key: string]: ActionHandler<T>;
+};
 
 /** Base class for collection and instance actions */
 export abstract class Action<T> {
@@ -27,7 +33,7 @@ export abstract class Action<T> {
   protected _requestIsDocument: boolean = true;
   protected _basePath: string = '/';
   protected _suffix: string | null = null;
-  private _handler: ActionHandler<T> = async ({ emit }) => emit.raw({});
+  private _handlers: ActionHandlerMap<T> = {};
 
   get path(): string {
     let result = this._basePath;
@@ -49,14 +55,20 @@ export abstract class Action<T> {
   }
 
   respondsWith(handler: ActionHandler<T>): this {
-    this._handler = handler;
+    this.respondsToContentType('application/json', handler);
+    return this;
+  }
+
+  respondsToContentType(contentType: string|string[], handler: ActionHandler<T>): this {
+    const contentTypes = toArray(contentType);
+    contentTypes.forEach(value => this._handlers[value] = handler);
     return this;
   }
 
   /**
    * Set the action's HTTP method.
    *
-   * @param method One of `GET`, `POST`, `PUT`, `PATCH` or `DELETE`-
+   * @param method One of `GET`, `POST`, `PUT`, `PATCH` or `DELETE`.
    */
   hasMethod(method: HttpMethod): this {
     if (!SUPPORTED_HTTP_METHODS.includes(method)) {
@@ -133,22 +145,46 @@ export abstract class Action<T> {
   bind(router: express.Router, dependencies: IDependencies) {
     const routePath = this.path;
 
-    const handlers: express.RequestHandler[] = [];
+    const middleware: express.RequestHandler[] = [];
     if (this._hasRequestBody) {
-      handlers.push(jsonParser);
+      middleware.push(jsonParser);
     }
-    handlers.push(wrapHandler(this._createRoute(this._handler, dependencies)));
+
+    // Wrap user defined handlers with the standard boilerplate
+    const handlers = Object
+      .entries(this._handlers)
+      .map(([contentType, handler]) => ({
+        contentType,
+        handler: this._createRoute(handler, dependencies)
+      }));
+
+    // Create an Express route which forwards the request to the correct handler based on
+    // Content-Type, or throws a 415 if no handler can accept that content type.
+    middleware.push(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+      try {
+        const filteredHandlers = handlers.filter(h => req.is(h.contentType));
+        if (filteredHandlers.length === 0) {
+          throw new UnsupportedMediaTypeError();
+        }
+
+        const emitter = await filteredHandlers[0].handler(req, res);
+        res.set('Content-Type', emitter.contentType);
+        res.json(emitter.response);
+      } catch (err) {
+        next(err);
+      }
+    });
 
     if (this._method === 'GET') {
-      router.get(routePath, ...handlers);
+      router.get(routePath, ...middleware);
     } else if (this._method === 'POST') {
-      router.post(routePath, ...handlers);
+      router.post(routePath, ...middleware);
     } else if (this._method === 'PUT') {
-      router.put(routePath, ...handlers);
+      router.put(routePath, ...middleware);
     } else if (this._method === 'PATCH') {
-      router.patch(routePath, ...handlers);
+      router.patch(routePath, ...middleware);
     } else if (this._method === 'DELETE') {
-      router.delete(routePath, ...handlers);
+      router.delete(routePath, ...middleware);
     }
   }
 
@@ -160,7 +196,7 @@ export abstract class Action<T> {
   protected abstract _createRoute(
     handler: ActionHandler<T>,
     dependencies: IDependencies
-  ): WrappedRequestHandler;
+  ): WrappedActionHandler<T>;
 
   /**
    * Perform some prepartions and validation common to both collection and instance actions.
@@ -188,13 +224,17 @@ export abstract class Action<T> {
       requestBody = req.body;
 
       if (this._requestIsDocument) {
+        // Incoming documents should always be JSON:API requests
+        if (!req.is(JSON_API_CONTENT_TYPE)) {
+          throw new UnsupportedMediaTypeError();
+        }
+
         // Always validate against the resource's document request schema when the action expects
         // to receive a document.
         const envelope = validator.assertRequestBody<JsonApiRequestEnvelope<T>>(
           this._resource.documentRequestSchemaId,
           requestBody
         );
-
         requestDocument = envelope.data;
 
         // Type in JSON:API document must match resource slug
@@ -204,7 +244,7 @@ export abstract class Action<T> {
           );
         }
 
-        // All attributes in an incoming document must be writable by the session
+        // Filter out attributes which are not writable by the session
         requestDocument.attributes
           = await session.filterWriteAttributes<T>(this._resource, requestDocument.attributes);
       } else if (this._requestContract) {
@@ -214,7 +254,7 @@ export abstract class Action<T> {
       }
     }
 
-    const emitter = new Emitter<T>(validator, this._resource, session);
+    const emitter = new Emitter<T>(validator, this._resource, req, session);
     return {
       store: this._resource.initialized.store,
       emitter,

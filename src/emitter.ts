@@ -1,15 +1,18 @@
+import express = require('express');
 import { IDocument } from './document';
-import { JsonApiResponseEnvelope } from './json-api';
+import { JSON_API_CONTENT_TYPE, JsonApiResponseEnvelope } from './json-api';
 import { Resource } from './resource';
 import { Session } from './session';
-import { isPromise } from './utils';
+import { assertAccepts, isPromise } from './utils';
 import { Validator } from './validator';
 
 export class Emitter<T> {
   private _validator: Validator;
   private _resource: Resource;
+  private _req: express.Request;
   private _session: Session;
   private _response?: JsonApiResponseEnvelope<T>;
+  private _contentType: string|null = null;
 
   public get response(): object {
     if (!this._response) {
@@ -18,9 +21,17 @@ export class Emitter<T> {
     return this._response;
   }
 
-  constructor(validator: Validator, resource: Resource, session: Session) {
+  public get contentType(): string {
+    if (!this._contentType) {
+      throw new Error('No content type set');
+    }
+    return this._contentType;
+  }
+
+  constructor(validator: Validator, resource: Resource, req: express.Request, session: Session) {
     this._validator = validator;
     this._resource = resource;
+    this._req = req;
     this._session = session;
   }
 
@@ -31,6 +42,7 @@ export class Emitter<T> {
    */
   public async document(response: IDocument<T> | Promise<IDocument<T>>): Promise<this> {
     this.assertNotEmitted();
+    this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
     let document: IDocument<T>;
     if (isPromise(response)) {
@@ -59,6 +71,7 @@ export class Emitter<T> {
    */
   public async collection(response: IDocument<T>[] | Promise<IDocument<T>[]>): Promise<this> {
     this.assertNotEmitted();
+    this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
     let documents: IDocument<T>[];
     if (isPromise(response)) {
@@ -86,8 +99,14 @@ export class Emitter<T> {
     return this;
   }
 
+  /**
+   * Emit a raw JSON response without any filtering.
+   *
+   * @param response The response object, or a promise resolving to one.
+   */
   public async raw(response: object | Promise<object>): Promise<this> {
     this.assertNotEmitted();
+    this.chooseContentType('application/json');
 
     if (isPromise(response)) {
       this._response = await response;
@@ -96,6 +115,16 @@ export class Emitter<T> {
     }
 
     return this;
+  }
+
+  /**
+   * Set the response content type from one or more choices to the one which best matches the
+   * request's Accept header. If none of the content types match, a HTTP 406 is thrown.
+   *
+   * @param contentType One or more content types to choose from.
+   */
+  private chooseContentType(contentType: string|string[]) {
+    this._contentType = assertAccepts(this._req, contentType);
   }
 
   /**

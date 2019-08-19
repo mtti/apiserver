@@ -1,4 +1,4 @@
-import { UnsupportedMediaTypeError } from '../errors';
+import { JSON_API_CONTENT_TYPE } from '../json-api';
 import { Uuid } from '../uuid';
 import { Resource } from '../resource';
 import { DefaultActionName } from '../types';
@@ -13,7 +13,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
       resource.createCollectionAction('create')
         .hasMethod('POST')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, store, requestDocument }) => {
+        .respondsToContentType(JSON_API_CONTENT_TYPE, async ({ emit, store, requestDocument }) => {
           const id = new Uuid().toString();
           return emit.document(store.create(id, requestDocument));
         });
@@ -23,36 +23,34 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
       resource.createInstanceAction('read')
         .hasMethod('GET')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, existingDocument }) => emit.document(existingDocument));
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, existingDocument }) => emit.document(existingDocument)
+        );
     },
 
     replace: <T>(resource: Resource<T>) => {
       resource.createInstanceAction('replace')
         .hasMethod('PUT')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, store, id, existingDocument, requestDocument }) =>
-          emit.document(store.replace(id, { ...existingDocument, ...requestDocument })));
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, store, id, existingDocument, requestDocument }) =>
+            emit.document(store.replace(id, { ...existingDocument, ...requestDocument }))
+        );
     },
 
     patch: <T>(resource: Resource<T>) => {
       resource.createInstanceAction('patch')
         .hasMethod('PATCH')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, req, store, id, existingDocument, requestBody }) => {
-          // TODO: Add JSON-PATCH support
-          if (req.is('application/json-patch+json')) {
-            if (store.jsonPatch) {
-              return emit.document(store.jsonPatch(id, requestBody));
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, store, id, existingDocument, requestBody }) => {
+            if (store.shallowUpdate) {
+              return emit.document(store.shallowUpdate(id, requestBody));
             }
-            throw new UnsupportedMediaTypeError('JSON PATCH is not implemented yet');
-          }
-
-          if (store.shallowUpdate) {
-            return emit.document(store.shallowUpdate(id, requestBody));
-          }
-
-          // Do a shallow update if JSON-PATCH was no specified
-          return emit.document(store.replace(id, { ...document, ...requestBody }));
+            return emit.document(store.replace(id, { ...existingDocument, ...requestBody }));
         });
     },
 
@@ -60,9 +58,11 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
       resource.createInstanceAction('destroy')
         .hasMethod('DELETE')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, store, id }) => {
-          await store.destroy(id);
-          return emit.raw({});
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, store, id }) => {
+            await store.destroy(id);
+            return emit.raw({});
         });
     },
 
@@ -70,7 +70,10 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
       resource.createCollectionAction('list')
         .hasMethod('GET')
         .hasSuffix(null)
-        .respondsWith(async ({ emit, store }) => emit.collection(store.list(null)));
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, store }) => emit.collection(store.list(null))
+        );
     },
   };
 }

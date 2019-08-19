@@ -78,6 +78,12 @@ export class NotFoundError extends ApiError {
   }
 }
 
+export class NotAcceptableError extends ApiError {
+  constructor(message: string = 'Not Acceptable') {
+    super(406, message);
+  }
+}
+
 export class UnsupportedMediaTypeError extends ApiError {
   constructor(message: string = 'Unsupported Media Type') {
     super(415, message);

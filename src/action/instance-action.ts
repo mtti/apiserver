@@ -75,7 +75,8 @@ export class InstanceAction<T> extends Action<T> {
       }
       params.existingDocument = document;
 
-      return (await handler(new ActionArguments<T>(params))).response;
+      await handler(new ActionArguments<T>(params));
+      return params.emitter;
     };
   }
 }
