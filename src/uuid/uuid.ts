@@ -5,7 +5,7 @@ import { isUuidString, UuidVersion } from './is-uuid-string';
  * Encapsulates a string UUID for type safety.
  */
 export class Uuid {
-  private _value:string;
+  private _value: string;
 
   /**
    * Creates a new UUID object.

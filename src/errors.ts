@@ -61,31 +61,31 @@ export class ApiError extends Error {
 }
 
 export class BadRequestError extends ApiError {
-  constructor(message: string = 'Bad Request') {
+  constructor(message = 'Bad Request') {
     super(400, message);
   }
 }
 
 export class ForbiddenError extends ApiError {
-  constructor(message: string = "Forbidden") {
+  constructor(message = "Forbidden") {
     super(403, message);
   }
 }
 
 export class NotFoundError extends ApiError {
-  constructor(message: string = 'Not Found') {
+  constructor(message = 'Not Found') {
     super(404, message);
   }
 }
 
 export class NotAcceptableError extends ApiError {
-  constructor(message: string = 'Not Acceptable') {
+  constructor(message = 'Not Acceptable') {
     super(406, message);
   }
 }
 
 export class UnsupportedMediaTypeError extends ApiError {
-  constructor(message: string = 'Unsupported Media Type') {
+  constructor(message = 'Unsupported Media Type') {
     super(415, message);
   }
 }
@@ -94,7 +94,7 @@ export class UnsupportedMediaTypeError extends ApiError {
 export class JSONSchemaViolationError extends ApiError {
   private _errors: Ajv.ErrorObject[];
 
-  constructor(errors: Ajv.ErrorObject[], status: number = 500, message: string = 'JSON Schema Violation') {
+  constructor(errors: Ajv.ErrorObject[], status = 500, message = 'JSON Schema Violation') {
     super(status, message);
     this._errors = [...errors];
   }
@@ -118,14 +118,14 @@ export class JSONSchemaViolationError extends ApiError {
 
 /** Throw when request body doesn't match JSON schema. */
 export class RequestBodyValidationError extends JSONSchemaViolationError {
-  constructor(errors: Ajv.ErrorObject[], message: string = 'Invalid Request Body') {
+  constructor(errors: Ajv.ErrorObject[], message = 'Invalid Request Body') {
     super(errors, 400, message);
   }
 }
 
 /** Error throw when outgoing data does not match contract. */
 export class ContractViolationError extends JSONSchemaViolationError {
-  constructor(errors: Ajv.ErrorObject[], message: string = 'Contract Violation') {
+  constructor(errors: Ajv.ErrorObject[], message = 'Contract Violation') {
     super(errors, 500, message);
   }
 }

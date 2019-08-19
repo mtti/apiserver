@@ -152,15 +152,15 @@ export class Resource<T = any> {
 
     if (this._defaultActions.length > 0) {
       const defaultActionFactories = getDefaultActionFactories<T>();
-      for (let actionName of this._defaultActions) {
+      for (const actionName of this._defaultActions) {
         defaultActionFactories[actionName](this);
       }
     }
 
-    for (let action of this._collectionActions) {
+    for (const action of this._collectionActions) {
       action.bind(router, dependencies);
     }
-    for (let action of this._instanceActions) {
+    for (const action of this._instanceActions) {
       action.bind(router, dependencies);
     }
 

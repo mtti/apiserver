@@ -2,7 +2,7 @@ import { suffixUrlFilename } from './utils';
 
 describe('utils', () => {
   describe('suffixUrlFilename()', () => {
-    let result: string = '';
+    let result = '';
     let error: any = null;
 
     beforeEach(() => {

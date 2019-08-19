@@ -11,7 +11,7 @@ import { Action, ActionHandler } from './action';
 import { ActionArguments } from './action-arguments'
 
 export class InstanceAction<T> extends Action<T> {
-  private _autoload: boolean = true;
+  private _autoload = true;
 
   constructor(resource: Resource<T>, name: string) {
     super(resource, name);

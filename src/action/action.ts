@@ -27,11 +27,11 @@ export abstract class Action<T> {
   protected _resource: Resource<T>;
   protected _name: string;
   protected _method: HttpMethod = 'POST';
-  protected _hasRequestBody: boolean = true;
+  protected _hasRequestBody = true;
   protected _requestContract?: string;
   protected _responseContract?: string;
-  protected _requestIsDocument: boolean = true;
-  protected _basePath: string = '/';
+  protected _requestIsDocument = true;
+  protected _basePath = '/';
   protected _suffix: string | null = null;
   private _handlers: ActionHandlerMap<T> = {};
 
@@ -103,7 +103,7 @@ export abstract class Action<T> {
    *
    * @param value `true` or `false`
    */
-  receivesBody(value: boolean = true): this {
+  receivesBody(value = true): this {
     this._hasRequestBody = value;
     return this;
   }
@@ -136,7 +136,7 @@ export abstract class Action<T> {
    *
    * @param value `true` or `false`
    */
-  receivesDocument(value: boolean = true): this {
+  receivesDocument(value = true): this {
     this._requestIsDocument = value;
     return this;
   }

@@ -12,6 +12,7 @@
     "build": "npm run clean && tsc",
     "test": "npm run lint && npm run jest",
     "lint": "eslint 'src/**/*.ts'",
+    "lint:fix": "eslint --fix 'src/**/*.ts'",
     "jest": "jest --config ./jest.config.ts.json",
     "tsc": "tsc",
     "prepare": "npm run build",

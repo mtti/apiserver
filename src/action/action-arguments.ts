@@ -4,13 +4,13 @@ import { Emitter } from '../emitter';
 import { IStore } from '../store';
 
 export type ActionArgumentParams<T> = {
-  store?: IStore<T>|null,
-  emitter: Emitter<T>,
-  req?: express.Request,
-  requestBody?: any|null,
-  requestDocument?: RequestDocument<T>|null,
-  existingDocument?: IDocument<T>|null,
-  id?: string,
+  store?: IStore<T>|null;
+  emitter: Emitter<T>;
+  req?: express.Request;
+  requestBody?: any|null;
+  requestDocument?: RequestDocument<T>|null;
+  existingDocument?: IDocument<T>|null;
+  id?: string;
 };
 
 export class ActionArguments<T> {

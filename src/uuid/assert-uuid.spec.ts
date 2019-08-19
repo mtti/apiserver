@@ -10,7 +10,7 @@ const VALID_UUID_V4 = 'f4d35e33-7b5d-49f6-9a61-1f1bc3738929';
 describe('assertUuid()', () => {
   let result: any;
   let error: any;
-  let mock:jest.SpyInstance;
+  let mock: jest.SpyInstance;
 
   beforeEach(() => {
     result = undefined;

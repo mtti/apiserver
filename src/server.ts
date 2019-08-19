@@ -11,7 +11,7 @@ export class ApiServer {
   private _validator: Validator;
   private _router?: express.Router;
   private _resources: Resource[] = [];
-  private _initialized: boolean = false;
+  private _initialized = false;
 
   /**
    * An Express router bound to API resources. Only available after the API server has been
@@ -46,7 +46,7 @@ export class ApiServer {
     if (this._initialized) {
       throw new Error('Tried to add a resource after ApiServer initializaton');
     }
-    for (let resource of resources) {
+    for (const resource of resources) {
       if (!(resource instanceof Resource)) {
         throw new Error('Tried to add a resource that is not a Resource class instance');
       }
@@ -67,7 +67,7 @@ export class ApiServer {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
 
-    const dependencies:IDependencies = {
+    const dependencies: IDependencies = {
       ...baseDependencies,
       apiServer: this,
       validator: this._validator,
@@ -77,7 +77,7 @@ export class ApiServer {
     const collections: string[] = [];
 
     // Initialize resource stores
-    for (let resource of this._resources) {
+    for (const resource of this._resources) {
       collections.push(resource.slug);
 
       const initializedResource = resource.initialize(dependencies);
@@ -94,7 +94,7 @@ export class ApiServer {
 
     this._router.get('/', wrapHandler(async (req: express.Request, res: express.Response) => collections));
 
-    for (let resource of this._resources) {
+    for (const resource of this._resources) {
       const router = resource.bind(dependencies);
       this._router.use(`/${resource.slug}`, router);
     }
