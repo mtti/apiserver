@@ -103,7 +103,6 @@ export class Resource<T = any> {
     return this._initialized;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(name: string, schema?: JsonSchema) {
     if (!RESOURCE_NAME_PATTERN.test(name)) {
       throw new TypeError(`Invalid resource name: ${name}`);
