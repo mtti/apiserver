@@ -1,10 +1,10 @@
 import express = require('express');
 import { Document } from './document';
-import { JSON_API_CONTENT_TYPE, JsonApiResponseEnvelope } from './json-api';
 import { Resource } from './resource';
 import { Session } from './session';
-import { assertAccepts, isPromise } from './utils';
 import { Validator } from './validator';
+import { assertAccepts, isPromise } from './utils';
+import { JSON_API_CONTENT_TYPE, JsonApiResponseEnvelope } from './json-api';
 
 export class Emitter<T> {
   private _validator: Validator;

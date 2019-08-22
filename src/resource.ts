@@ -1,10 +1,10 @@
 import express = require('express');
-import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
-import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
-import { createJsonApiDocumentResponseSchema, createJsonApiDocumentRequestSchema } from './json-api';
-import { Store, StoreFactory } from './store';
-import { DefaultActionName, Dependencies, JsonSchema } from './types';
 import { suffixUrlFilename } from './utils';
+import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
+import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
+import { createJsonApiDocumentRequestSchema, createJsonApiDocumentResponseSchema } from './json-api';
+import { DefaultActionName, Dependencies, JsonSchema } from './types';
+import { Store, StoreFactory } from './store';
 
 export class InitializedResource<T> {
   private _name: string;

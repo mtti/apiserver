@@ -1,7 +1,7 @@
 import express = require('express');
-import { Document, RequestDocument } from '../document';
 import { Emitter } from '../emitter';
 import { Store } from '../store';
+import { Document, RequestDocument } from '../document';
 
 export type ActionArgumentParams<T> = {
   store?: Store<T>|null;

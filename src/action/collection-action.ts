@@ -1,12 +1,12 @@
 import express = require('express');
+import { ActionArguments } from './action-arguments';
+import { Dependencies } from '../types';
 import { Emitter } from '../emitter';
 import { ForbiddenError } from '../errors';
 import { Resource } from '../resource';
 import { SessionParser } from '../session';
-import { Dependencies } from '../types';
 import { Validator } from '../validator';
 import { Action, ActionHandler, WrappedActionHandler } from './action';
-import { ActionArguments } from './action-arguments';
 
 export class CollectionAction<T> extends Action<T> {
   constructor(resource: Resource<T>, name: string) {

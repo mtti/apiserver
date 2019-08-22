@@ -1,10 +1,10 @@
 import express = require('express');
-import { errorHandler, notFoundHandler } from './error-handler';
-import { Resource } from './resource';
 import { Dependencies } from './types';
+import { Resource } from './resource';
 import { Validator } from './validator';
 import { wrapHandler } from './handler';
-import { SessionParser, PermissiveSession} from './session';
+import { errorHandler, notFoundHandler } from './error-handler';
+import { PermissiveSession, SessionParser} from './session';
 
 export class ApiServer {
   private _sessionParser: SessionParser = async () => new PermissiveSession();

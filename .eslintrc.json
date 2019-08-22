@@ -23,6 +23,10 @@
             "ignoreStrings": true,
             "ignoreRegExpLiterals": true
         }],
+        "sort-imports": ["error", {
+            "ignoreCase": true,
+            "memberSyntaxSortOrder": ["none", "all", "single", "multiple"]
+        }],
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/no-unused-vars": ["error", {
             "args": "none"

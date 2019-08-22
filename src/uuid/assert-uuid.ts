@@ -1,6 +1,6 @@
+import { BadRequestError } from '../errors';
 import { Uuid } from './uuid';
 import { UuidVersion } from './is-uuid-string';
-import { BadRequestError } from '../errors';
 
 /**
  * Creates an Uuid from a string representation, throwing a BadRequestError if

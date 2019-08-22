@@ -1,7 +1,7 @@
-import { JSON_API_CONTENT_TYPE } from '../json-api';
-import { Uuid } from '../uuid';
-import { Resource } from '../resource';
 import { DefaultActionName } from '../types';
+import { JSON_API_CONTENT_TYPE } from '../json-api';
+import { Resource } from '../resource';
+import { Uuid } from '../uuid';
 
 export type DefaultActionFactories<T> = {
   [K in DefaultActionName]: (resource: Resource<T>) => void;

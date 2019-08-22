@@ -1,7 +1,7 @@
 import express = require('express');
 import * as url from 'url';
-import { NotAcceptableError } from './errors';
 import { Dictionary } from './types';
+import { NotAcceptableError } from './errors';
 
 /**
  * Add a suffix to the filename in an URL.

@@ -1,20 +1,16 @@
 import express = require('express');
 import * as bodyParser from 'body-parser';
-import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
-import { RequestDocument } from '../document';
 import { Emitter } from '../emitter';
-import {
-  BadRequestError,
-  ForbiddenError,
-  UnsupportedMediaTypeError
-} from '../errors';
-import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
+import { RequestDocument } from '../document';
 import { Resource } from '../resource';
-import { Dependencies, HttpMethod } from '../types';
 import { Session } from '../session';
 import { toArray } from '../utils';
 import { Validator } from '../validator';
-import { ActionArguments, ActionArgumentParams } from './action-arguments';
+import { ActionArgumentParams, ActionArguments } from './action-arguments';
+import { BadRequestError, ForbiddenError, UnsupportedMediaTypeError } from '../errors';
+import { Dependencies, HttpMethod } from '../types';
+import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
+import { METHODS_WITH_BODY, SUPPORTED_HTTP_METHODS } from '../constants';
 
 const jsonParser = bodyParser.json();
 
