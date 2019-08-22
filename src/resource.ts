@@ -204,7 +204,10 @@ export class Resource<T = any> {
       $id: this.documentRequestSchemaId,
       type: 'object',
       properties: {
-        data: createJsonApiDocumentRequestSchema(this._documentSchemaId, this.slug),
+        data: createJsonApiDocumentRequestSchema(
+          this._documentSchemaId,
+          this.slug
+        ),
       }
     };
 
@@ -214,7 +217,10 @@ export class Resource<T = any> {
       properties: {
         data: {
           type: 'array',
-          items: createJsonApiDocumentResponseSchema(this._documentSchemaId, this.slug),
+          items: createJsonApiDocumentResponseSchema(
+            this._documentSchemaId,
+            this.slug
+          ),
         },
         meta: {
           type: 'object',
@@ -235,10 +241,17 @@ export class Resource<T = any> {
       $id: this.documentResponseSchemaId,
       type: 'object',
       properties: {
-        data: createJsonApiDocumentResponseSchema(this._documentSchemaId, this.slug),
+        data: createJsonApiDocumentResponseSchema(
+          this._documentSchemaId,
+          this.slug
+        ),
       }
     };
 
-    return [documentRequestSchema, collectionResponseSchema, documentResponseSchema];
+    return [
+      documentRequestSchema,
+      collectionResponseSchema,
+      documentResponseSchema
+    ];
   }
 }

@@ -28,7 +28,12 @@ export class Emitter<T> {
     return this._contentType;
   }
 
-  constructor(validator: Validator, resource: Resource, req: express.Request, session: Session) {
+  constructor(
+    validator: Validator,
+    resource: Resource,
+    req: express.Request,
+    session: Session
+  ) {
     this._validator = validator;
     this._resource = resource;
     this._req = req;
@@ -40,7 +45,9 @@ export class Emitter<T> {
    *
    * @param response
    */
-  public async document(response: Document<T> | Promise<Document<T>>): Promise<this> {
+  public async document(
+    response: Document<T> | Promise<Document<T>>
+  ): Promise<this> {
     this.assertNotEmitted();
     this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
@@ -55,11 +62,17 @@ export class Emitter<T> {
       data: {
         id: document.id,
         type: this._resource.slug,
-        attributes: await this._session.filterReadAttributes<T>(this._resource, document.attributes),
+        attributes: await this._session.filterReadAttributes<T>(
+          this._resource,
+          document.attributes
+        ),
       }
     }
 
-    this._validator.assertResponse(this._resource.documentResponseSchemaId, finalResponse);
+    this._validator.assertResponse(
+      this._resource.documentResponseSchemaId,
+      finalResponse
+    );
     this._response = finalResponse;
     return this;
   }
@@ -69,7 +82,9 @@ export class Emitter<T> {
    *
    * @param response
    */
-  public async collection(response: Document<T>[] | Promise<Document<T>[]>): Promise<this> {
+  public async collection(
+    response: Document<T>[] | Promise<Document<T>[]>
+  ): Promise<this> {
     this.assertNotEmitted();
     this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
@@ -80,21 +95,28 @@ export class Emitter<T> {
       documents = response;
     }
 
-    const filteredDocuments = await Promise.all(documents.map(async ({id, attributes}) => {
-      const filteredAttributes
-        = await this._session.filterReadAttributes(this._resource, attributes);
-      return {
-        id,
-        type: this._resource.slug,
-        attributes: filteredAttributes
-      };
-    }));
+    const filteredDocuments = await Promise.all(
+      documents.map(async ({id, attributes}) => {
+        const filteredAttributes = await this._session.filterReadAttributes(
+          this._resource,
+          attributes
+        );
+        return {
+          id,
+          type: this._resource.slug,
+          attributes: filteredAttributes
+        };
+      }
+    ));
 
     const finalResponse = {
       data: filteredDocuments,
     };
 
-    this._validator.assertResponse(this._resource.collectionResponseSchemaId, finalResponse);
+    this._validator.assertResponse(
+      this._resource.collectionResponseSchemaId,
+      finalResponse
+    );
     this._response = finalResponse;
     return this;
   }
@@ -118,8 +140,9 @@ export class Emitter<T> {
   }
 
   /**
-   * Set the response content type from one or more choices to the one which best matches the
-   * request's Accept header. If none of the content types match, a HTTP 406 is thrown.
+   * Set the response content type from one or more choices to the one which
+   * best matches the request's Accept header. If none of the content types
+   * match, a HTTP 406 is thrown.
    *
    * @param contentType One or more content types to choose from.
    */

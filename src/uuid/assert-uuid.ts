@@ -3,12 +3,15 @@ import { UuidVersion } from './is-uuid-string';
 import { BadRequestError } from '../errors';
 
 /**
- * Creates an Uuid from a string representation, throwing a BadRequestError if the string is
- * invalid.
+ * Creates an Uuid from a string representation, throwing a BadRequestError if
+ * the string is invalid.
  * @param value String representation of the UUID.
  * @param version UUID version to validate for. Defaults to UuidVersion.Any.
  */
-export function assertUuid(value: any, version: UuidVersion = UuidVersion.Any): Uuid {
+export function assertUuid(
+  value: any,
+  version: UuidVersion = UuidVersion.Any
+): Uuid {
   try {
     return new Uuid(value, version);
   } catch (err) {

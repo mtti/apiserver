@@ -26,20 +26,29 @@ export abstract class Session {
    * @param action Name of the action
    * @param body The request body, if any
    */
-  async authorizeCollectionAction<T>(resource: Resource<T>, action: string, body?: any): Promise<boolean> {
+  async authorizeCollectionAction<T>(
+    resource: Resource<T>,
+    action: string,
+    body?: any
+  ): Promise<boolean> {
     return true;
   }
 
   /**
-   * Check if the session is authorized to perform an action on a document before loading said
-   * document.
+   * Check if the session is authorized to perform an action on a document
+   * before loading said document.
    *
    * @param resource The resource on which the action is being performed
    * @param action Name of the action being performed
    * @param id ID of the document on which the action is being performed
    * @param body Request body, if any
    */
-  async preAuthorizeDocumentAction<T>(resource: Resource<T>, action: string, id: string, body?: object): Promise<boolean> {
+  async preAuthorizeDocumentAction<T>(
+    resource: Resource<T>,
+    action: string,
+    id: string,
+    body?: object
+  ): Promise<boolean> {
     return true;
   }
 
@@ -52,17 +61,29 @@ export abstract class Session {
    * @param document The loaded document on which the action is being performed
    * @param body Request body, if any
    */
-  async authorizeDocumentAction<T>(resource: Resource<T>, action: string, id: string, document: object, body?: any): Promise<boolean> {
+  async authorizeDocumentAction<T>(
+    resource: Resource<T>,
+    action: string,
+    id: string,
+    document: object,
+    body?: any
+  ): Promise<boolean> {
     return true;
   }
 
   /** Filter fields from an incoming document */
-  async filterWriteAttributes<T>(resource: Resource<T>, attributes: T): Promise<T> {
+  async filterWriteAttributes<T>(
+    resource: Resource<T>,
+    attributes: T
+  ): Promise<T> {
     return { ...attributes };
   }
 
   /** Filter fields from an outgoing document  */
-  async filterReadAttributes<T>(resource: Resource<T>, attributes: T): Promise<T> {
+  async filterReadAttributes<T>(
+    resource: Resource<T>,
+    attributes: T
+  ): Promise<T> {
     return { ...attributes };
   }
 }

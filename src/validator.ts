@@ -22,7 +22,8 @@ export class Validator {
   }
 
   /**
-   * Throw a `RequestBodyValidationError` if an object doesn't match a JSON schema.
+   * Throw a `RequestBodyValidationError` if an object doesn't match a JSON
+   * schema.
    *
    * @param schema Name of JSON schema to validate against.
    * @param data Request body.
@@ -37,7 +38,8 @@ export class Validator {
   }
 
   /**
-   * Validate a JSON response against a contract, throwing `ContractViolationError` on failure.
+   * Validate a JSON response against a contract, throwing
+   * `ContractViolationError` on failure.
    *
    * @param schema Name of JSON schema to validate agains.
    * @param data Response body.
@@ -58,7 +60,10 @@ export class Validator {
    * @param data Object to validate.
    * @returns An array with validation status and errors, if any.
    */
-  public validateSchema(schema: string, data: any): [boolean, Ajv.ErrorObject[]|null] {
+  public validateSchema(
+    schema: string,
+    data: any
+  ): [boolean, Ajv.ErrorObject[]|null] {
     if (this._ajv.validate(schema, data)) {
       return [true, null];
     }

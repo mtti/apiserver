@@ -73,7 +73,11 @@ export class UnsupportedMediaTypeError extends ApiError {
 export class JSONSchemaViolationError extends ApiError {
   private _errors: Ajv.ErrorObject[];
 
-  constructor(errors: Ajv.ErrorObject[], status = 500, message = 'JSON Schema Violation') {
+  constructor(
+    errors: Ajv.ErrorObject[],
+    status = 500,
+    message = 'JSON Schema Violation'
+  ) {
     super(status, message);
     this._errors = [...errors];
   }

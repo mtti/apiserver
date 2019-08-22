@@ -18,11 +18,12 @@ export class InstanceAction<T> extends Action<T> {
   }
 
   /**
-   * Enable or disable loading of the instance before executing the handler callback. Defaults
-   * to `true` for all instance actions.
+   * Enable or disable loading of the instance before executing the handler
+   * callback. Defaults to `true` for all instance actions.
    *
-   * Not that setting this to `false` means {@link Session#authorizeDocumentAction} will not be
-   * called as there is no loaded document to authorize against, so you will rely solely on
+   * Not that setting this to `false` means
+   * {@link Session#authorizeDocumentAction} will not be called as there is no
+   * loaded document to authorize against, so you will rely solely on
    * {@link Session#preAuthorizeDocumentAction} for access control.
    *
    * @param value `true` or `false`.
@@ -32,7 +33,10 @@ export class InstanceAction<T> extends Action<T> {
     return this;
   }
 
-  protected _createRoute(handler: ActionHandler<T>, dependencies: Dependencies): WrappedActionHandler<T> {
+  protected _createRoute(
+    handler: ActionHandler<T>,
+    dependencies: Dependencies
+  ): WrappedActionHandler<T> {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -48,7 +52,10 @@ export class InstanceAction<T> extends Action<T> {
     }
     const store = this._resource.initialized.store;
 
-    return async (req: express.Request, res: express.Response): Promise<Emitter<T>> => {
+    return async (
+      req: express.Request,
+      res: express.Response
+    ): Promise<Emitter<T>> => {
       const session = await getSession(req);
       const params = await this._prepareRequest(validator, session, req);
 
@@ -57,7 +64,13 @@ export class InstanceAction<T> extends Action<T> {
       params.id = req.params.id;
 
       // Initial authorization before the target document is loaded
-      if (!(await session.preAuthorizeDocumentAction(this._resource, this._name, id, params.requestBody))) {
+      const isPreAuthorized = await session.preAuthorizeDocumentAction(
+        this._resource,
+        this._name,
+        id,
+        params.requestBody
+      );
+      if (!isPreAuthorized) {
         throw new ForbiddenError();
       }
 
@@ -68,7 +81,14 @@ export class InstanceAction<T> extends Action<T> {
         if (document === null) {
           throw new NotFoundError();
         }
-        if (!(await session.authorizeDocumentAction(this._resource, this._name, id, document, params.requestBody))) {
+        const isAuthorized = await session.authorizeDocumentAction(
+          this._resource,
+          this._name,
+          id,
+          document,
+          params.requestBody
+        );
+        if (!isAuthorized) {
           throw new ForbiddenError();
         }
       }

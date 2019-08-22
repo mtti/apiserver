@@ -17,6 +17,12 @@
         "@typescript-eslint/eslint-plugin"
     ],
     "rules": {
+        "max-len": ["error", {
+            "code": 80,
+            "ignoreTemplateLiterals": true,
+            "ignoreStrings": true,
+            "ignoreRegExpLiterals": true
+        }],
         "@typescript-eslint/no-explicit-any": 0,
         "@typescript-eslint/no-unused-vars": ["error", {
             "args": "none"

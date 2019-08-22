@@ -38,7 +38,11 @@ export function isPromise(value: any): value is Promise<any> {
  */
 export function fromEntries<T>(entries: [string, T][]): Dictionary<T> {
   return entries
-    .reduce((result, [key, value]) => ({ ...result, [key]: value}), ({} as Dictionary<T>));
+    .reduce((
+      result,
+      [key, value]) => ({ ...result, [key]: value}),
+      ({} as Dictionary<T>)
+    );
 }
 
 /**
@@ -54,13 +58,16 @@ export function toArray<T>(value: T|T[]): T[] {
 }
 
 /**
- * Throws a `406 Not Acceptable` error if the express request does not accept any of the content
- * types. Otherwise, the best match is returned.
+ * Throws a `406 Not Acceptable` error if the express request does not accept
+ * any of the content types. Otherwise, the best match is returned.
  *
  * @param req
  * @param contentTypes
  */
-export function assertAccepts(req: express.Request, contentType: string|string[]): string {
+export function assertAccepts(
+  req: express.Request,
+  contentType: string|string[]
+): string {
   const contentTypes = toArray(contentType);
   const match = req.accepts(contentTypes);
   if (!match) {

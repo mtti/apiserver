@@ -2,8 +2,16 @@ import { Request, Response } from 'express';
 import { ApiError, NotFoundError } from './errors';
 import { createJsonApiErrorResponse, JSON_API_CONTENT_TYPE } from './json-api';
 
-/** An Express error handler that outputs JSON and can handle thrown ApiError instances. */
-export function errorHandler(err: Error, req: Request, res: Response, next: any): void {
+/**
+ * An Express error handler that outputs JSON and can handle thrown ApiError
+ * instances.
+ */
+export function errorHandler(
+  err: Error,
+  req: Request,
+  res: Response,
+  next: any
+): void {
   if (err instanceof ApiError) {
     res
       .status(err.status)

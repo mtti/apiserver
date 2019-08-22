@@ -25,8 +25,8 @@ export type JsonApiResponseDocument<T> = {
 };
 
 /**
- * Error objects provide additional information about problems encountered while performing an
- * operation.
+ * Error objects provide additional information about problems encountered while
+ * performing an operation.
  */
 export type JsonApiError = {
   id?: string;
@@ -43,7 +43,9 @@ export type JsonApiMeta = {
   [key: string]: any;
 };
 
-export function createJsonApiErrorResponse(original: Error): JsonApiErrorResponse {
+export function createJsonApiErrorResponse(
+  original: Error
+): JsonApiErrorResponse {
   if (original instanceof ApiError) {
     return {
       errors: original.toJsonApi(),
@@ -73,7 +75,10 @@ export function createJsonApiErrorResponse(original: Error): JsonApiErrorRespons
  * @param attributesSchemaId
  * @param slug
  */
-export function createJsonApiDocumentResponseSchema(attributesSchemaId: string, slug: string): object {
+export function createJsonApiDocumentResponseSchema(
+  attributesSchemaId: string,
+  slug: string
+): object {
   return {
     type: 'object',
     properties: {
@@ -97,7 +102,10 @@ export function createJsonApiDocumentResponseSchema(attributesSchemaId: string, 
  * @param attributesSchemaId
  * @param slug
  */
-export function createJsonApiDocumentRequestSchema(attributesSchemaId: string, slug: string): object {
+export function createJsonApiDocumentRequestSchema(
+  attributesSchemaId: string,
+  slug: string
+): object {
   return {
     type: 'object',
     properties: {

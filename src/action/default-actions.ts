@@ -13,10 +13,13 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
       resource.withCollectionAction('create')
         .hasMethod('POST')
         .hasSuffix(null)
-        .respondsToContentType(JSON_API_CONTENT_TYPE, async ({ emit, store, requestDocument }) => {
-          const id = new Uuid().toString();
-          return emit.document(store.create(id, requestDocument));
-        });
+        .respondsToContentType(
+          JSON_API_CONTENT_TYPE,
+          async ({ emit, store, requestDocument }) => {
+            const id = new Uuid().toString();
+            return emit.document(store.create(id, requestDocument));
+          }
+        );
     },
 
     read: <T>(resource: Resource<T>): void => {
@@ -36,7 +39,9 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         .respondsToContentType(
           JSON_API_CONTENT_TYPE,
           async ({ emit, store, id, existingDocument, requestDocument }) =>
-            emit.document(store.replace(id, { ...existingDocument, ...requestDocument }))
+            emit.document(
+              store.replace(id, { ...existingDocument, ...requestDocument })
+            )
         );
     },
 
@@ -50,7 +55,9 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
             if (store.shallowUpdate) {
               return emit.document(store.shallowUpdate(id, requestBody));
             }
-            return emit.document(store.replace(id, { ...existingDocument, ...requestBody }));
+            return emit.document(
+              store.replace(id, { ...existingDocument, ...requestBody })
+            );
         });
     },
 

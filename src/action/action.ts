@@ -3,7 +3,11 @@ import * as bodyParser from 'body-parser';
 import { SUPPORTED_HTTP_METHODS, METHODS_WITH_BODY } from '../constants';
 import { RequestDocument } from '../document';
 import { Emitter } from '../emitter';
-import { BadRequestError, ForbiddenError, UnsupportedMediaTypeError } from '../errors';
+import {
+  BadRequestError,
+  ForbiddenError,
+  UnsupportedMediaTypeError
+} from '../errors';
 import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
 import { Resource } from '../resource';
 import { Dependencies, HttpMethod } from '../types';
@@ -14,9 +18,11 @@ import { ActionArguments, ActionArgumentParams } from './action-arguments';
 
 const jsonParser = bodyParser.json();
 
-export type ActionHandler<T> = (args: ActionArguments<T>) => Promise<Emitter<T>>;
+export type ActionHandler<T>
+  = (args: ActionArguments<T>) => Promise<Emitter<T>>;
 
-export type WrappedActionHandler<T> = (req: express.Request, res: express.Response) => Promise<Emitter<T>>;
+export type WrappedActionHandler<T>
+  = (req: express.Request, res: express.Response) => Promise<Emitter<T>>;
 
 export type ActionHandlerMap<T> = {
   [key: string]: ActionHandler<T>;
@@ -56,8 +62,8 @@ export abstract class Action<T> {
   }
 
   /**
-   * A reference to the object itself. Can optionally be used to make the fluent API read more
-   * fluently.
+   * A reference to the object itself. Can optionally be used to make the fluent
+   * API read more fluently.
    */
   get which(): this {
     return this;
@@ -74,7 +80,10 @@ export abstract class Action<T> {
     return this;
   }
 
-  respondsToContentType(contentType: string|string[], handler: ActionHandler<T>): this {
+  respondsToContentType(
+    contentType: string|string[],
+    handler: ActionHandler<T>
+  ): this {
     const contentTypes = toArray(contentType);
     contentTypes.forEach(value => this._handlers[value] = handler);
     return this;
@@ -113,8 +122,8 @@ export abstract class Action<T> {
   }
 
   /**
-   * Set whether the action receives a request body. This is enabled by default if the action's
-   * HTTP method is set to `POST`, `PUT` or `PATCH`.
+   * Set whether the action receives a request body. This is enabled by default
+   * if the action's HTTP method is set to `POST`, `PUT` or `PATCH`.
    *
    * @param value `true` or `false`
    */
@@ -144,10 +153,10 @@ export abstract class Action<T> {
   }
 
   /**
-   * Set whether the action receives a document. If it does, the request body is automatically
-   * filtered with `Session.filterRequestFields` to remove fields which the user is not authorized
-   * to write. Has no effect if the action has been configured not to receive a request body.
-   * Defaults to `true`.
+   * Set whether the action receives a document. If it does, the request body is
+   * automatically filtered with `Session.filterRequestFields` to remove fields
+   * which the user is not authorized to write. Has no effect if the action has
+   * been configured not to receive a request body. Defaults to `true`.
    *
    * @param value `true` or `false`
    */
@@ -173,9 +182,14 @@ export abstract class Action<T> {
         handler: this._createRoute(handler, dependencies)
       }));
 
-    // Create an Express route which forwards the request to the correct handler based on
-    // Content-Type, or throws a 415 if no handler can accept that content type.
-    middleware.push(async (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    // Create an Express route which forwards the request to the correct handler
+    // based on Content-Type, or throws a 415 if no handler can accept that
+    // content type.
+    middleware.push(async (
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ): Promise<void> => {
       try {
         const filteredHandlers = handlers.filter(h => req.is(h.contentType));
         if (filteredHandlers.length === 0) {
@@ -214,7 +228,8 @@ export abstract class Action<T> {
   ): WrappedActionHandler<T>;
 
   /**
-   * Perform some prepartions and validation common to both collection and instance actions.
+   * Perform some prepartions and validation common to both collection and
+   * instance actions.
    *
    * @param validator
    * @param session
@@ -244,8 +259,8 @@ export abstract class Action<T> {
           throw new UnsupportedMediaTypeError();
         }
 
-        // Always validate against the resource's document request schema when the action expects
-        // to receive a document.
+        // Always validate against the resource's document request schema when
+        // the action expects to receive a document.
         const envelope = validator.assertRequestBody<JsonApiRequestEnvelope<T>>(
           this._resource.documentRequestSchemaId,
           requestBody
@@ -260,12 +275,17 @@ export abstract class Action<T> {
         }
 
         // Filter out attributes which are not writable by the session
-        requestDocument.attributes
-          = await session.filterWriteAttributes<T>(this._resource, requestDocument.attributes);
+        requestDocument.attributes = await session.filterWriteAttributes<T>(
+          this._resource,
+          requestDocument.attributes
+        );
       } else if (this._requestContract) {
-        // Action expects something other than a document, so validate agains a custom request
-        // contract if one is specified.
-        requestBody = validator.assertRequestBody<object>(this._requestContract, requestBody);
+        // Action expects something other than a document, so validate agains
+        // a custom request contract if one is specified.
+        requestBody = validator.assertRequestBody<object>(
+          this._requestContract,
+          requestBody
+        );
       }
     }
 

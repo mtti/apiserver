@@ -10,9 +10,10 @@ export class Uuid {
   /**
    * Creates a new UUID object.
    *
-   * @param value String representation of the UUID. Optional. If not given, a random v4 UUID is
-   *  generated.
-   * @param version UUID version to validate the string against. Ignored if "value" is undefined.
+   * @param value String representation of the UUID. Optional. If not given,
+   *  a random v4 UUID is generated.
+   * @param version UUID version to validate the string against. Ignored if
+   *   "value" is undefined.
    */
   constructor(value?: any, version: UuidVersion = UuidVersion.Any) {
     if (!value) {

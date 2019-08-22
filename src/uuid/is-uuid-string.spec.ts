@@ -3,29 +3,6 @@ import { isUuidString, UuidVersion } from './is-uuid-string';
 const VALID_UUID_V4 = 'f4d35e33-7b5d-49f6-9a61-1f1bc3738929';
 const VALID_UUID_V5 = '4be0643f-1d98-573b-97cd-ca98a65347dd';
 
-
-//import * as original from './uuid';
-
-//const mocked = original as jest.Mocked<typeof original>;
-
-/*
-import * as original from './services/implementation/authentication.service';  // import module
-jest.mock('./services/implementation/authentication.service');
-
-const mocked = original as jest.Mocked<typeof original>;  // Let TypeScript know mocked is an auto-mock of the module
-const AuthenticationService = mocked.default;  // AuthenticationService has correct TypeScript typing
-
-beforeEach(() => {
-  AuthenticationService.mockClear();
-});
-
-it('test', () => {
-
-    // mock.instances is available with automatic mocks:
-    const authServerInstance = AuthenticationService.mock.instances[0];
-
-*/
-
 describe('UUIDs', () => {
   describe('isUuidString()', () => {
     let result: boolean|undefined;

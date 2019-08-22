@@ -13,7 +13,10 @@ export class CollectionAction<T> extends Action<T> {
     super(resource, name);
   }
 
-  protected _createRoute(handler: ActionHandler<T>, dependencies: Dependencies): WrappedActionHandler<T> {
+  protected _createRoute(
+    handler: ActionHandler<T>,
+    dependencies: Dependencies
+  ): WrappedActionHandler<T> {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -24,13 +27,21 @@ export class CollectionAction<T> extends Action<T> {
     }
     const getSession = dependencies.getSession as SessionParser;
 
-    return async (req: express.Request, res: express.Response): Promise<Emitter<T>> => {
+    return async (
+      req: express.Request,
+      res: express.Response
+    ): Promise<Emitter<T>> => {
       const session = await getSession(req);
 
       const params = await this._prepareRequest(validator, session, req);
 
       // Authorize action
-      if (!(await session.authorizeCollectionAction<T>(this._resource, this._name, params.requestBody))) {
+      const isAuthorized = await session.authorizeCollectionAction<T>(
+        this._resource,
+        this._name,
+        params.requestBody
+      );
+      if (!isAuthorized) {
         throw new ForbiddenError();
       }
 
