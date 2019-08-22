@@ -10,7 +10,7 @@ export type DefaultActionFactories<T> = {
 export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
   return {
     create: <T>(resource: Resource<T>): void => {
-      resource.createCollectionAction('create')
+      resource.withCollectionAction('create')
         .hasMethod('POST')
         .hasSuffix(null)
         .respondsToContentType(JSON_API_CONTENT_TYPE, async ({ emit, store, requestDocument }) => {
@@ -20,7 +20,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
     },
 
     read: <T>(resource: Resource<T>): void => {
-      resource.createInstanceAction('read')
+      resource.withInstanceAction('read')
         .hasMethod('GET')
         .hasSuffix(null)
         .respondsToContentType(
@@ -30,7 +30,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
     },
 
     replace: <T>(resource: Resource<T>): void => {
-      resource.createInstanceAction('replace')
+      resource.withInstanceAction('replace')
         .hasMethod('PUT')
         .hasSuffix(null)
         .respondsToContentType(
@@ -41,7 +41,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
     },
 
     patch: <T>(resource: Resource<T>): void => {
-      resource.createInstanceAction('patch')
+      resource.withInstanceAction('patch')
         .hasMethod('PATCH')
         .hasSuffix(null)
         .respondsToContentType(
@@ -55,7 +55,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
     },
 
     destroy: <T>(resource: Resource<T>): void => {
-      resource.createInstanceAction('destroy')
+      resource.withInstanceAction('destroy')
         .hasMethod('DELETE')
         .hasSuffix(null)
         .respondsToContentType(
@@ -67,7 +67,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
     },
 
     list: <T>(resource: Resource<T>): void => {
-      resource.createCollectionAction('list')
+      resource.withCollectionAction('list')
         .hasMethod('GET')
         .hasSuffix(null)
         .respondsToContentType(

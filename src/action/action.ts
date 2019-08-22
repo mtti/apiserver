@@ -48,6 +48,21 @@ export abstract class Action<T> {
     return result;
   }
 
+  /**
+   * The resource to which this action belongs. Used as part of the fluent API.
+   */
+  get and(): Resource {
+    return this._resource;
+  }
+
+  /**
+   * A reference to the object itself. Can optionally be used to make the fluent API read more
+   * fluently.
+   */
+  get which(): this {
+    return this;
+  }
+
   constructor(resource: Resource<T>, name: string) {
     this._resource = resource;
     this._name = name;

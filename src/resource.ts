@@ -115,7 +115,7 @@ export class Resource<T = any> {
         throw new Error('Schema has not $id');
       }
       this._documentSchemaId = schema['$id'];
-      this.addSchemas([ schema ]);
+      this.withSchemas([ schema ]);
     }
   }
 
@@ -124,7 +124,7 @@ export class Resource<T = any> {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
 
-    this.addSchemas([ ...this.generateResponseSchemas() ]);
+    this.withSchemas([ ...this.generateResponseSchemas() ]);
 
     let store: Store<T>|null = null;
     if (this._storeFactory) {
@@ -139,35 +139,35 @@ export class Resource<T = any> {
     return this._initialized;
   }
 
-  setSlug(value: string): this {
+  withSlug(value: string): this {
     this._slug = value;
     return this;
   }
 
   /** Sets the list of default CRUD actions to create. */
-  setDefaultActions(...values: DefaultActionName[]): this {
+  withDefaultActions(...values: DefaultActionName[]): this {
     this._defaultActions = [ ...values ];
     return this;
   }
 
-  setStore(factory: StoreFactory<T>): this {
+  withStore(factory: StoreFactory<T>): this {
     this._storeFactory = factory;
     return this;
   }
 
   /** Add JSON schemas */
-  addSchemas(...schemas: object[]): this {
+  withSchemas(...schemas: object[]): this {
     this._jsonSchemas.push(...schemas);
     return this;
   }
 
-  createCollectionAction(name: string): CollectionAction<T> {
+  withCollectionAction(name: string): CollectionAction<T> {
     const action = new CollectionAction(this, name);
     this._collectionActions.push(action);
     return action;
   }
 
-  createInstanceAction(name: string): InstanceAction<T> {
+  withInstanceAction(name: string): InstanceAction<T> {
     const action = new InstanceAction(this, name);
     this._instanceActions.push(action);
     return action;
