@@ -3,7 +3,7 @@ import { CollectionAction, getDefaultActionFactories, InstanceAction } from './a
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { createJsonApiDocumentResponseSchema, createJsonApiDocumentRequestSchema } from './json-api';
 import { Store, StoreFactory } from './store';
-import { DefaultActionName, Dependencies } from './types';
+import { DefaultActionName, Dependencies, JsonSchema } from './types';
 import { suffixUrlFilename } from './utils';
 
 export class InitializedResource<T> {
@@ -37,7 +37,7 @@ export class Resource<T = any> {
   private _defaultActions: DefaultActionName[] = ALL_DEFAULT_ACTIONS;
   private _storeFactory?: StoreFactory<T>;
   private _initialized?: InitializedResource<T>;
-  private _jsonSchemas: object[] = [];
+  private _jsonSchemas: JsonSchema[] = [];
   private _documentSchemaId: string|null = null;
   private _collectionActions: CollectionAction<T>[] = [];
   private _instanceActions: InstanceAction<T>[] = [];
@@ -104,7 +104,7 @@ export class Resource<T = any> {
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  constructor(name: string, schema?: any) {
+  constructor(name: string, schema?: JsonSchema) {
     if (!RESOURCE_NAME_PATTERN.test(name)) {
       throw new TypeError(`Invalid resource name: ${name}`);
     }
@@ -112,10 +112,10 @@ export class Resource<T = any> {
 
     if (schema) {
       if (!schema['$id']) {
-        throw new Error('Schema has not $id');
+        throw new Error('Schema has no $id');
       }
       this._documentSchemaId = schema['$id'];
-      this.withSchemas([ schema ]);
+      this.withSchemas(schema);
     }
   }
 
@@ -124,7 +124,7 @@ export class Resource<T = any> {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
 
-    this.withSchemas([ ...this.generateResponseSchemas() ]);
+    this.withSchemas(...this.generateResponseSchemas());
 
     let store: Store<T>|null = null;
     if (this._storeFactory) {
@@ -156,7 +156,7 @@ export class Resource<T = any> {
   }
 
   /** Add JSON schemas */
-  withSchemas(...schemas: object[]): this {
+  withSchemas(...schemas: JsonSchema[]): this {
     this._jsonSchemas.push(...schemas);
     return this;
   }
@@ -196,7 +196,7 @@ export class Resource<T = any> {
   /**
    * Generate schemas for JSON:API compliant response envelopes.
    */
-  private generateResponseSchemas(): object[] {
+  private generateResponseSchemas(): JsonSchema[] {
     if (!this._documentSchemaId) {
       return [];
     }
