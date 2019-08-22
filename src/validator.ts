@@ -17,7 +17,7 @@ export class Validator {
    * Adds a schema to the underlying JSON schema validator.
    * @param schema Schema or an array of schemas.
    */
-  public addSchema(schema: object|object[]) {
+  public addSchema(schema: object|object[]): void {
     this._ajv.addSchema(schema);
   }
 

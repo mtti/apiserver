@@ -1,10 +1,11 @@
 import express = require('express');
+import { Emitter } from '../emitter';
 import { ForbiddenError } from '../errors';
 import { Resource } from '../resource';
 import { SessionParser } from '../session';
-import { IDependencies } from '../types';
+import { Dependencies } from '../types';
 import { Validator } from '../validator';
-import { Action, ActionHandler } from './action';
+import { Action, ActionHandler, WrappedActionHandler } from './action';
 import { ActionArguments } from './action-arguments';
 
 export class CollectionAction<T> extends Action<T> {
@@ -12,7 +13,7 @@ export class CollectionAction<T> extends Action<T> {
     super(resource, name);
   }
 
-  protected _createRoute(handler: ActionHandler<T>, dependencies: IDependencies) {
+  protected _createRoute(handler: ActionHandler<T>, dependencies: Dependencies): WrappedActionHandler<T> {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -23,7 +24,7 @@ export class CollectionAction<T> extends Action<T> {
     }
     const getSession = dependencies.getSession as SessionParser;
 
-    return async (req: express.Request, res: express.Response) => {
+    return async (req: express.Request, res: express.Response): Promise<Emitter<T>> => {
       const session = await getSession(req);
 
       const params = await this._prepareRequest(validator, session, req);

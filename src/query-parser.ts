@@ -1,10 +1,10 @@
-export interface IFilterExpression {
+export type FilterExpression = {
   key: string;
   op: string;
   val: string;
 }
 
-export function parseQueryFilter(query: any): Array<IFilterExpression> {
+export function parseQueryFilter(query: any): Array<FilterExpression> {
   if (typeof query != 'object') {
     return [];
   }
@@ -26,5 +26,5 @@ export function parseQueryFilter(query: any): Array<IFilterExpression> {
       throw new Error('Conditions must be a string or a filter expression object');
     }
     return result;
-  }, [] as Array<IFilterExpression>);
+  }, [] as Array<FilterExpression>);
 }

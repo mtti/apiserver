@@ -7,6 +7,6 @@ export type Dictionary<T> = {
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 
 /** Interface for the dependency injection container. */
-export interface IDependencies {
+export interface Dependencies {
   [name: string]: any;
 }

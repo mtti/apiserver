@@ -1,14 +1,5 @@
-/* tslint:disable:max-classes-per-file */
-
 import Ajv = require('Ajv');
 import { JsonApiError } from './json-api';
-
-export interface IErrorJson {
-  message: string;
-  stack?: string;
-  originalMessage?: string;
-  [name: string]: any;
-}
 
 /** Error to throw when a runtime type assertation fails. */
 export class TypeAssertationError extends Error {
@@ -30,18 +21,6 @@ export class ApiError extends Error {
   constructor(status: number, message: string) {
     super(message);
     this._status = status;
-  }
-
-  public toJson(): IErrorJson {
-    const result: IErrorJson = {
-      message: this.message,
-    };
-
-    if (process.env.NODE_ENV !== 'production') {
-      result.stack = this.stack;
-    }
-
-    return result;
   }
 
   public toJsonApi(): JsonApiError[] {
@@ -104,15 +83,6 @@ export class JSONSchemaViolationError extends ApiError {
       return [ ...this._errors ];
     }
     return [];
-  }
-
-  public toJson(): IErrorJson {
-    const result = super.toJson();
-    if (process.env.NODE_ENV === 'production') {
-      return result;
-    }
-    result.jsonSchemaErrors = this.errors;
-    return result;
   }
 }
 

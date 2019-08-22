@@ -3,7 +3,7 @@ import { ApiError, NotFoundError } from './errors';
 import { createJsonApiErrorResponse, JSON_API_CONTENT_TYPE } from './json-api';
 
 /** An Express error handler that outputs JSON and can handle thrown ApiError instances. */
-export function errorHandler(err: Error, req: Request, res: Response, next: any) {
+export function errorHandler(err: Error, req: Request, res: Response, next: any): void {
   if (err instanceof ApiError) {
     res
       .status(err.status)
@@ -18,6 +18,6 @@ export function errorHandler(err: Error, req: Request, res: Response, next: any)
 }
 
 /** An Express middleware for producing JSON-formatted 404 errors. */
-export function notFoundHandler(req: Request, res: Response, next: any) {
+export function notFoundHandler(req: Request, res: Response, next: any): void {
   next(new NotFoundError());
 }

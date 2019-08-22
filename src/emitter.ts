@@ -1,5 +1,5 @@
 import express = require('express');
-import { IDocument } from './document';
+import { Document } from './document';
 import { JSON_API_CONTENT_TYPE, JsonApiResponseEnvelope } from './json-api';
 import { Resource } from './resource';
 import { Session } from './session';
@@ -40,13 +40,13 @@ export class Emitter<T> {
    *
    * @param response
    */
-  public async document(response: IDocument<T> | Promise<IDocument<T>>): Promise<this> {
+  public async document(response: Document<T> | Promise<Document<T>>): Promise<this> {
     this.assertNotEmitted();
     this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
-    let document: IDocument<T>;
+    let document: Document<T>;
     if (isPromise(response)) {
-      document = await (response as Promise<IDocument<T>>);
+      document = await (response as Promise<Document<T>>);
     } else {
       document = response;
     }
@@ -69,13 +69,13 @@ export class Emitter<T> {
    *
    * @param response
    */
-  public async collection(response: IDocument<T>[] | Promise<IDocument<T>[]>): Promise<this> {
+  public async collection(response: Document<T>[] | Promise<Document<T>[]>): Promise<this> {
     this.assertNotEmitted();
     this.chooseContentType([JSON_API_CONTENT_TYPE, 'application/json']);
 
-    let documents: IDocument<T>[];
+    let documents: Document<T>[];
     if (isPromise(response)) {
-      documents = await (response as Promise<IDocument<T>[]>);
+      documents = await (response as Promise<Document<T>[]>);
     } else {
       documents = response;
     }
@@ -123,14 +123,14 @@ export class Emitter<T> {
    *
    * @param contentType One or more content types to choose from.
    */
-  private chooseContentType(contentType: string|string[]) {
+  private chooseContentType(contentType: string|string[]): void {
     this._contentType = assertAccepts(this._req, contentType);
   }
 
   /**
    * Throw an error if a response has already been emitted.
    */
-  private async assertNotEmitted() {
+  private assertNotEmitted(): void {
     if (this._response) {
       throw new Error('Reponse already emitted');
     }

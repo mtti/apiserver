@@ -2,9 +2,34 @@ import express = require('express');
 import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { createJsonApiDocumentResponseSchema, createJsonApiDocumentRequestSchema } from './json-api';
-import { IStore, StoreFactory } from './store';
-import { DefaultActionName, IDependencies } from './types';
+import { Store, StoreFactory } from './store';
+import { DefaultActionName, Dependencies } from './types';
 import { suffixUrlFilename } from './utils';
+
+export class InitializedResource<T> {
+  private _name: string;
+  private _store: Store<T>|null;
+
+  get name(): string {
+    return this._name;
+  }
+
+  get hasStore(): boolean {
+    return !!this._store;
+  }
+
+  get store(): Store<T> {
+    if (!this._store) {
+      throw new Error(`Resource ${this._name} has no store`);
+    }
+    return this._store;
+  }
+
+  constructor(name: string, store: Store<T>|null) {
+    this._name = name;
+    this._store = store;
+  }
+}
 
 export class Resource<T = any> {
   private _name: string;
@@ -78,6 +103,7 @@ export class Resource<T = any> {
     return this._initialized;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(name: string, schema?: any) {
     if (!RESOURCE_NAME_PATTERN.test(name)) {
       throw new TypeError(`Invalid resource name: ${name}`);
@@ -93,14 +119,14 @@ export class Resource<T = any> {
     }
   }
 
-  initialize(dependencies: IDependencies): InitializedResource<T> {
+  initialize(dependencies: Dependencies): InitializedResource<T> {
     if (this._initialized) {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
 
     this.addSchemas([ ...this.generateResponseSchemas() ]);
 
-    let store: IStore<T>|null = null;
+    let store: Store<T>|null = null;
     if (this._storeFactory) {
       store = this._storeFactory(dependencies);
     }
@@ -147,7 +173,7 @@ export class Resource<T = any> {
     return action;
   }
 
-  bind(dependencies: IDependencies): express.Router {
+  bind(dependencies: Dependencies): express.Router {
     const router = express.Router();
 
     if (this._defaultActions.length > 0) {
@@ -215,30 +241,5 @@ export class Resource<T = any> {
     };
 
     return [documentRequestSchema, collectionResponseSchema, documentResponseSchema];
-  }
-}
-
-export class InitializedResource<T> {
-  private _name: string;
-  private _store: IStore<T>|null;
-
-  get name(): string {
-    return this._name;
-  }
-
-  get hasStore(): boolean {
-    return !!this._store;
-  }
-
-  get store(): IStore<T> {
-    if (!this._store) {
-      throw new Error(`Resource ${this._name} has no store`);
-    }
-    return this._store;
-  }
-
-  constructor(name: string, store: IStore<T>|null) {
-    this._name = name;
-    this._store = store;
   }
 }

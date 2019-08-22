@@ -2,7 +2,7 @@
 /**
  * A document loaded from a store.
  */
-export interface IDocument<T> {
+export type Document<T> = {
   id: string;
   attributes: T;
 }

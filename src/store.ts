@@ -1,23 +1,23 @@
-import { IDependencies } from './types';
-import { IDocument } from './document';
+import { Dependencies } from './types';
+import { Document } from './document';
 
-export type StoreFactory<T> = (dependencies: IDependencies) => IStore<T>;
+export type StoreFactory<T> = (dependencies: Dependencies) => Store<T>;
 
-export interface IStore<T> {
+export interface Store<T> {
   /**
    * Create a new object.
    */
-  create: (id: string, instance: any) => Promise<IDocument<T>>;
+  create: (id: string, instance: any) => Promise<Document<T>>;
 
   /**
    * Load an existing instance. Resolves to `null` if the instance was not found.
    */
-  read: (id: string) => Promise<IDocument<T>|null>;
+  read: (id: string) => Promise<Document<T>|null>;
 
   /**
    * Replace an existing instance of an object with a new version, returning the new version.
    */
-  replace: (id: string, instance: any) => Promise<IDocument<T>>;
+  replace: (id: string, instance: any) => Promise<Document<T>>;
 
   /**
    * Delete an existing instance.
@@ -29,15 +29,15 @@ export interface IStore<T> {
    *
    * Should resolve to an object keyed by each document's primary key as a string.
    */
-  list: (query: any) => Promise<IDocument<T>[]>;
+  list: (query: any) => Promise<Document<T>[]>;
 
   /**
    * Optional optimized shallow update that receives just the fields to be updated.
    */
-  shallowUpdate?: (id: string, updates: object) => Promise<IDocument<T>>;
+  shallowUpdate?: (id: string, updates: object) => Promise<Document<T>>;
 
   /**
    * Optional optimized JSON-PATCH which receives just the patch object.
    */
-  jsonPatch?: (id: string, patch: object) => Promise<IDocument<T>>;
+  jsonPatch?: (id: string, patch: object) => Promise<Document<T>>;
 }

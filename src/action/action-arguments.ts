@@ -1,25 +1,25 @@
 import express = require('express');
-import { IDocument, RequestDocument } from '../document';
+import { Document, RequestDocument } from '../document';
 import { Emitter } from '../emitter';
-import { IStore } from '../store';
+import { Store } from '../store';
 
 export type ActionArgumentParams<T> = {
-  store?: IStore<T>|null;
+  store?: Store<T>|null;
   emitter: Emitter<T>;
   req?: express.Request;
   requestBody?: any|null;
   requestDocument?: RequestDocument<T>|null;
-  existingDocument?: IDocument<T>|null;
+  existingDocument?: Document<T>|null;
   id?: string;
 };
 
 export class ActionArguments<T> {
   private _emitter: Emitter<T>;
   private _req: express.Request;
-  private _store?: IStore<T>;
+  private _store?: Store<T>;
   private _requestBody?: any;
   private _requestDocument?: RequestDocument<T>;
-  private _existingDocument?: IDocument<T>;
+  private _existingDocument?: Document<T>;
   private _id?: string;
 
   get emit(): Emitter<T> {
@@ -30,7 +30,7 @@ export class ActionArguments<T> {
     return this._req;
   }
 
-  get store(): IStore<T> {
+  get store(): Store<T> {
     if (!this._store) {
       throw new Error('Missing: store');
     }
@@ -51,7 +51,7 @@ export class ActionArguments<T> {
     return this._requestDocument;
   }
 
-  get existingDocument(): IDocument<T> {
+  get existingDocument(): Document<T> {
     if (!this._existingDocument) {
       throw new Error('Missing: existingDocument');
     }

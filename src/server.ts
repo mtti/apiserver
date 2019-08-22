@@ -1,7 +1,7 @@
 import express = require('express');
 import { errorHandler, notFoundHandler } from './error-handler';
 import { Resource } from './resource';
-import { IDependencies } from './types';
+import { Dependencies } from './types';
 import { Validator } from './validator';
 import { wrapHandler } from './handler';
 import { SessionParser, PermissiveSession} from './session';
@@ -42,7 +42,7 @@ export class ApiServer {
    *
    * @param resources Resource definitions to add.
    */
-  public addResources(resources: Resource[]) {
+  public addResources(resources: Resource[]): void {
     if (this._initialized) {
       throw new Error('Tried to add a resource after ApiServer initializaton');
     }
@@ -62,12 +62,12 @@ export class ApiServer {
    * @returns A promise resolving to a copy of the `dependencies` argument with the ApiServer
    *  and resource stores added to it.
    */
-  public async initialize(baseDependencies: IDependencies): Promise<IDependencies> {
+  public async initialize(baseDependencies: Dependencies): Promise<Dependencies> {
     if (this._initialized) {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
 
-    const dependencies: IDependencies = {
+    const dependencies: Dependencies = {
       ...baseDependencies,
       apiServer: this,
       validator: this._validator,

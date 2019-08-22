@@ -6,7 +6,7 @@ import { Emitter } from '../emitter';
 import { BadRequestError, ForbiddenError, UnsupportedMediaTypeError } from '../errors';
 import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
 import { Resource } from '../resource';
-import { IDependencies, HttpMethod } from '../types';
+import { Dependencies, HttpMethod } from '../types';
 import { Session } from '../session';
 import { toArray } from '../utils';
 import { Validator } from '../validator';
@@ -142,7 +142,7 @@ export abstract class Action<T> {
   }
 
   /** Bind the action to an express router */
-  bind(router: express.Router, dependencies: IDependencies) {
+  bind(router: express.Router, dependencies: Dependencies): void {
     const routePath = this.path;
 
     const middleware: express.RequestHandler[] = [];
@@ -195,7 +195,7 @@ export abstract class Action<T> {
    */
   protected abstract _createRoute(
     handler: ActionHandler<T>,
-    dependencies: IDependencies
+    dependencies: Dependencies
   ): WrappedActionHandler<T>;
 
   /**

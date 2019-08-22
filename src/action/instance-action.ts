@@ -1,13 +1,12 @@
 import express = require('express');
-import { IDocument } from '../document';
+import { Document } from '../document';
 import { Emitter } from '../emitter';
 import { ForbiddenError, NotFoundError } from '../errors';
-import { wrapHandler } from '../handler';
 import { Resource } from '../resource';
 import { SessionParser } from '../session';
-import { IDependencies } from '../types';
+import { Dependencies } from '../types';
 import { Validator } from '../validator';
-import { Action, ActionHandler } from './action';
+import { Action, ActionHandler, WrappedActionHandler } from './action';
 import { ActionArguments } from './action-arguments'
 
 export class InstanceAction<T> extends Action<T> {
@@ -33,7 +32,7 @@ export class InstanceAction<T> extends Action<T> {
     return this;
   }
 
-  protected _createRoute(handler: ActionHandler<T>, dependencies: IDependencies) {
+  protected _createRoute(handler: ActionHandler<T>, dependencies: Dependencies): WrappedActionHandler<T> {
     if (!dependencies.validator) {
       throw new Error('Missing dependency: validator');
     }
@@ -49,7 +48,7 @@ export class InstanceAction<T> extends Action<T> {
     }
     const store = this._resource.initialized.store;
 
-    return async (req: express.Request, res: express.Response) => {
+    return async (req: express.Request, res: express.Response): Promise<Emitter<T>> => {
       const session = await getSession(req);
       const params = await this._prepareRequest(validator, session, req);
 
@@ -63,7 +62,7 @@ export class InstanceAction<T> extends Action<T> {
       }
 
       // Load and authorize against existing document if autoloading is enabled
-      let document: IDocument<T>|null = null;
+      let document: Document<T>|null = null;
       if (this._autoload) {
         document = await store.read(id);
         if (document === null) {

@@ -9,7 +9,7 @@ export type DefaultActionFactories<T> = {
 
 export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
   return {
-    create: <T>(resource: Resource<T>) => {
+    create: <T>(resource: Resource<T>): void => {
       resource.createCollectionAction('create')
         .hasMethod('POST')
         .hasSuffix(null)
@@ -19,7 +19,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         });
     },
 
-    read: <T>(resource: Resource<T>) => {
+    read: <T>(resource: Resource<T>): void => {
       resource.createInstanceAction('read')
         .hasMethod('GET')
         .hasSuffix(null)
@@ -29,7 +29,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         );
     },
 
-    replace: <T>(resource: Resource<T>) => {
+    replace: <T>(resource: Resource<T>): void => {
       resource.createInstanceAction('replace')
         .hasMethod('PUT')
         .hasSuffix(null)
@@ -40,7 +40,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         );
     },
 
-    patch: <T>(resource: Resource<T>) => {
+    patch: <T>(resource: Resource<T>): void => {
       resource.createInstanceAction('patch')
         .hasMethod('PATCH')
         .hasSuffix(null)
@@ -54,7 +54,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         });
     },
 
-    destroy: <T>(resource: Resource<T>) => {
+    destroy: <T>(resource: Resource<T>): void => {
       resource.createInstanceAction('destroy')
         .hasMethod('DELETE')
         .hasSuffix(null)
@@ -66,7 +66,7 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         });
     },
 
-    list: <T>(resource: Resource<T>) => {
+    list: <T>(resource: Resource<T>): void => {
       resource.createCollectionAction('list')
         .hasMethod('GET')
         .hasSuffix(null)

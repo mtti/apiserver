@@ -10,7 +10,7 @@ export type WrappedRequestHandler = (req: express.Request, res: express.Response
  * errors thrown by the wrapped handler and forwards them to the Express error handler.
  */
 export function wrapHandler(cb: WrappedRequestHandler): express.RequestHandler {
-  return async (req, res, next) => {
+  return async (req, res, next): Promise<void> => {
     try {
       res.json(await cb(req, res));
     } catch (err) {
