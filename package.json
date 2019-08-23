@@ -5,12 +5,13 @@
   "main": "dist/index.js",
   "private": true,
   "engines": {
-    "node": ">=8.10.0"
+    "node": ">=10.15.0"
   },
   "scripts": {
     "setup": "npm install",
     "build": "npm run clean && tsc",
     "test": "npm run lint && npm run jest",
+    "test:docker": "docker build -f ./Dockerfile-test -t apiserver-test . && docker run --rm -it apiserver-test",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "jest": "jest --config ./jest.config.ts.json",
