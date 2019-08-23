@@ -1,4 +1,4 @@
-import Ajv = require('Ajv');
+import Ajv = require('ajv');
 import { JsonApiError } from './json-api';
 
 /** Error to throw when a runtime type assertation fails. */
