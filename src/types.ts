@@ -1,10 +1,5 @@
 export type DefaultActionName = 'create' | 'read' | 'replace' | 'patch' | 'destroy' | 'list';
 
-/** Interface for the dependency injection container. */
-export interface Dependencies {
-  [name: string]: any;
-}
-
 export type Dictionary<T> = {
   [key: string]: T;
 }

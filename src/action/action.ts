@@ -1,6 +1,8 @@
 import express = require('express');
 import * as bodyParser from 'body-parser';
+import { ApiServer } from '../server';
 import { Emitter } from '../emitter';
+import { HttpMethod } from '../types';
 import { RequestDocument } from '../document';
 import { Resource } from '../resource';
 import { Session } from '../session';
@@ -8,11 +10,12 @@ import { toArray } from '../utils';
 import { Validator } from '../validator';
 import { ActionArgumentParams, ActionArguments } from './action-arguments';
 import { BadRequestError, ForbiddenError, UnsupportedMediaTypeError } from '../errors';
-import { Dependencies, HttpMethod } from '../types';
 import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from '../json-api';
 import { METHODS_WITH_BODY, SUPPORTED_HTTP_METHODS } from '../constants';
 
-const jsonParser = bodyParser.json();
+const jsonParser = bodyParser.json({
+  type: ['application/json', JSON_API_CONTENT_TYPE]
+});
 
 export type ActionHandler<T>
   = (args: ActionArguments<T>) => Promise<Emitter<T>>;
@@ -162,7 +165,7 @@ export abstract class Action<T> {
   }
 
   /** Bind the action to an express router */
-  bind(router: express.Router, dependencies: Dependencies): void {
+  bind(router: express.Router, server: ApiServer): void {
     const routePath = this.path;
 
     const middleware: express.RequestHandler[] = [];
@@ -175,7 +178,7 @@ export abstract class Action<T> {
       .entries(this._handlers)
       .map(([contentType, handler]) => ({
         contentType,
-        handler: this._createRoute(handler, dependencies)
+        handler: this._createRoute(handler, server)
       }));
 
     // Create an Express route which forwards the request to the correct handler
@@ -220,7 +223,7 @@ export abstract class Action<T> {
    */
   protected abstract _createRoute(
     handler: ActionHandler<T>,
-    dependencies: Dependencies
+    server: ApiServer
   ): WrappedActionHandler<T>;
 
   /**

@@ -1,3 +1,4 @@
+import { ActionArguments } from './action-arguments';
 import { DefaultActionName } from '../types';
 import { JSON_API_CONTENT_TYPE } from '../json-api';
 import { Resource } from '../resource';
@@ -15,9 +16,9 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
         .hasSuffix(null)
         .respondsToContentType(
           JSON_API_CONTENT_TYPE,
-          async ({ emit, store, requestDocument }) => {
+          async ({ emit, store, requestDocument }: ActionArguments<T>) => {
             const id = new Uuid().toString();
-            return emit.document(store.create(id, requestDocument));
+            return emit.document(store.create(id, requestDocument.attributes));
           }
         );
     },
@@ -40,7 +41,13 @@ export function getDefaultActionFactories<T>(): DefaultActionFactories<T> {
           JSON_API_CONTENT_TYPE,
           async ({ emit, store, id, existingDocument, requestDocument }) =>
             emit.document(
-              store.replace(id, { ...existingDocument, ...requestDocument })
+              store.replace(
+                id,
+                {
+                  ...existingDocument.attributes,
+                  ...requestDocument.attributes,
+                }
+              )
             )
         );
     },

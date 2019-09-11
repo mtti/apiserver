@@ -1,5 +1,5 @@
 import express = require('express');
-import { Dependencies } from './types';
+import { Injector } from '@mtti/deps';
 import { Resource } from './resource';
 import { Validator } from './validator';
 import { wrapHandler } from './handler';
@@ -23,6 +23,14 @@ export class ApiServer {
       throw new Error('Router unavailable because ApiServer has not been initialized');
     }
     return this._router;
+  }
+
+  public get validator(): Validator {
+    return this._validator;
+  }
+
+  public get getSession(): SessionParser {
+    return this._sessionParser;
   }
 
   /**
@@ -64,30 +72,18 @@ export class ApiServer {
    * @returns A promise resolving to a copy of the `dependencies` argument with
    *   the ApiServer and resource stores added to it.
    */
-  public async initialize(
-    baseDependencies: Dependencies
-  ): Promise<Dependencies> {
+  public async initialize(injector: Injector): Promise<void> {
     if (this._initialized) {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
 
-    const dependencies: Dependencies = {
-      ...baseDependencies,
-      apiServer: this,
-      validator: this._validator,
-      stores: {},
-      getSession: this._sessionParser,
-    };
     const collections: string[] = [];
 
     // Initialize resource stores
     for (const resource of this._resources) {
       collections.push(resource.slug);
 
-      const initializedResource = resource.initialize(dependencies);
-      if (initializedResource.hasStore) {
-        dependencies.stores[resource.name] = initializedResource.store;
-      }
+      await resource.initialize(injector);
 
       this._validator.addSchema(resource.schemas);
     }
@@ -99,13 +95,11 @@ export class ApiServer {
     this._router.get('/', wrapHandler(async (req: express.Request, res: express.Response) => collections));
 
     for (const resource of this._resources) {
-      const router = resource.bind(dependencies);
+      const router = resource.bind(this);
       this._router.use(`/${resource.slug}`, router);
     }
 
     this._router.use(notFoundHandler);
     this._router.use(errorHandler);
-
-    return dependencies;
   }
 }

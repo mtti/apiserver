@@ -44,7 +44,7 @@ export class ActionArguments<T> {
     return this._requestBody;
   }
 
-  get requestDocument(): any {
+  get requestDocument(): RequestDocument<T> {
     if (!this._requestDocument) {
       throw new Error('Missing: requestDocument');
     }
