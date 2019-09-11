@@ -1,11 +1,9 @@
 import express = require('express');
 import { ActionArguments } from './action-arguments';
-import { Dependencies } from '../types';
+import { ApiServer } from '../server';
 import { Emitter } from '../emitter';
 import { ForbiddenError } from '../errors';
 import { Resource } from '../resource';
-import { SessionParser } from '../session';
-import { Validator } from '../validator';
 import { Action, ActionHandler, WrappedActionHandler } from './action';
 
 export class CollectionAction<T> extends Action<T> {
@@ -15,25 +13,11 @@ export class CollectionAction<T> extends Action<T> {
 
   protected _createRoute(
     handler: ActionHandler<T>,
-    dependencies: Dependencies
+    server: ApiServer
   ): WrappedActionHandler<T> {
-    if (!dependencies.validator) {
-      throw new Error('Missing dependency: validator');
-    }
-    const validator = dependencies.validator as Validator;
-
-    if(!dependencies.getSession) {
-      throw new Error('Missing dependency: getSession');
-    }
-    const getSession = dependencies.getSession as SessionParser;
-
-    return async (
-      req: express.Request,
-      res: express.Response
-    ): Promise<Emitter<T>> => {
-      const session = await getSession(req);
-
-      const params = await this._prepareRequest(validator, session, req);
+    return async (req: express.Request): Promise<Emitter<T>> => {
+      const session = await server.getSession(req);
+      const params = await this._prepareRequest(server.validator, session, req);
 
       // Authorize action
       const isAuthorized = await session.authorizeCollectionAction<T>(

@@ -1,11 +1,9 @@
 import express = require('express');
 import { ActionArguments } from './action-arguments'
-import { Dependencies } from '../types';
+import { ApiServer } from '../server';
 import { Document } from '../document';
 import { Emitter } from '../emitter';
 import { Resource } from '../resource';
-import { SessionParser } from '../session';
-import { Validator } from '../validator';
 import { Action, ActionHandler, WrappedActionHandler } from './action';
 import { ForbiddenError, NotFoundError } from '../errors';
 
@@ -35,18 +33,8 @@ export class InstanceAction<T> extends Action<T> {
 
   protected _createRoute(
     handler: ActionHandler<T>,
-    dependencies: Dependencies
+    server: ApiServer
   ): WrappedActionHandler<T> {
-    if (!dependencies.validator) {
-      throw new Error('Missing dependency: validator');
-    }
-    const validator = dependencies.validator as Validator;
-
-    if(!dependencies.getSession) {
-      throw new Error('Missing dependency: getSession');
-    }
-    const getSession = dependencies.getSession as SessionParser;
-
     if (!this._resource.initialized.hasStore) {
       throw new Error(`Resource ${this._resource.name} has no store`);
     }
@@ -56,8 +44,8 @@ export class InstanceAction<T> extends Action<T> {
       req: express.Request,
       res: express.Response
     ): Promise<Emitter<T>> => {
-      const session = await getSession(req);
-      const params = await this._prepareRequest(validator, session, req);
+      const session = await server.getSession(req);
+      const params = await this._prepareRequest(server.validator, session, req);
 
       // TODO: Validate ID
       const id = req.params.id;

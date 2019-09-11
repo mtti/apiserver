@@ -1,10 +1,12 @@
 import express = require('express');
+import { ApiServer } from './server';
+import { Store } from './store';
 import { suffixUrlFilename } from './utils';
 import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
 import { createJsonApiDocumentRequestSchema, createJsonApiDocumentResponseSchema } from './json-api';
-import { DefaultActionName, Dependencies, JsonSchema } from './types';
-import { Store, StoreFactory } from './store';
+import { DefaultActionName, JsonSchema } from './types';
+import { DependencyKey, Injector } from '@mtti/deps';
 
 export class InitializedResource<T> {
   private _name: string;
@@ -35,12 +37,12 @@ export class Resource<T = any> {
   private _name: string;
   private _slug?: string;
   private _defaultActions: DefaultActionName[] = ALL_DEFAULT_ACTIONS;
-  private _storeFactory?: StoreFactory<T>;
   private _initialized?: InitializedResource<T>;
   private _jsonSchemas: JsonSchema[] = [];
   private _documentSchemaId: string|null = null;
   private _collectionActions: CollectionAction<T>[] = [];
   private _instanceActions: InstanceAction<T>[] = [];
+  private _storeType?: DependencyKey<Store<T>>;
 
   get name(): string {
     return this._name;
@@ -93,7 +95,7 @@ export class Resource<T = any> {
   }
 
   get hasStore(): boolean {
-    return !!this._storeFactory;
+    return !!this._storeType;
   }
 
   get initialized(): InitializedResource<T> {
@@ -118,7 +120,7 @@ export class Resource<T = any> {
     }
   }
 
-  initialize(dependencies: Dependencies): InitializedResource<T> {
+  async initialize(injector: Injector): Promise<InitializedResource<T>> {
     if (this._initialized) {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
@@ -126,8 +128,8 @@ export class Resource<T = any> {
     this.withSchemas(...this.generateResponseSchemas());
 
     let store: Store<T>|null = null;
-    if (this._storeFactory) {
-      store = this._storeFactory(dependencies);
+    if (this._storeType) {
+      store = await injector.resolve(this._storeType);
     }
 
     this._initialized = new InitializedResource(
@@ -149,8 +151,8 @@ export class Resource<T = any> {
     return this;
   }
 
-  withStore(factory: StoreFactory<T>): this {
-    this._storeFactory = factory;
+  withStore(source: DependencyKey<Store<T>>): this {
+    this._storeType = source;
     return this;
   }
 
@@ -172,7 +174,7 @@ export class Resource<T = any> {
     return action;
   }
 
-  bind(dependencies: Dependencies): express.Router {
+  bind(server: ApiServer): express.Router {
     const router = express.Router();
 
     if (this._defaultActions.length > 0) {
@@ -183,10 +185,10 @@ export class Resource<T = any> {
     }
 
     for (const action of this._collectionActions) {
-      action.bind(router, dependencies);
+      action.bind(router, server);
     }
     for (const action of this._instanceActions) {
-      action.bind(router, dependencies);
+      action.bind(router, server);
     }
 
     return router;
@@ -208,7 +210,8 @@ export class Resource<T = any> {
           this._documentSchemaId,
           this.slug
         ),
-      }
+      },
+      required: ['data'],
     };
 
     const collectionResponseSchema = {
@@ -234,6 +237,7 @@ export class Resource<T = any> {
           }
         }
       },
+      required: ['data'],
       additionalProperties: false,
     };
 
@@ -245,7 +249,8 @@ export class Resource<T = any> {
           this._documentSchemaId,
           this.slug
         ),
-      }
+      },
+      required: ['data'],
     };
 
     return [

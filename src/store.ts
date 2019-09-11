@@ -1,13 +1,13 @@
-import { Dependencies } from './types';
 import { Document } from './document';
 
-export type StoreFactory<T> = (dependencies: Dependencies) => Store<T>;
-
+/**
+ * Store for accessing documents with the attribute type `T`.
+ */
 export interface Store<T> {
   /**
    * Create a new object.
    */
-  create: (id: string, instance: any) => Promise<Document<T>>;
+  create: (id: string, attributes: T) => Promise<Document<T>>;
 
   /**
    * Load an existing instance. Resolves to `null` if the instance was not
@@ -19,7 +19,7 @@ export interface Store<T> {
    * Replace an existing instance of an object with a new version, returning
    * the new version.
    */
-  replace: (id: string, instance: any) => Promise<Document<T>>;
+  replace: (id: string, attributes: T) => Promise<Document<T>>;
 
   /**
    * Delete an existing instance.
