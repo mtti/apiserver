@@ -1,5 +1,4 @@
 import express = require('express');
-import { Injector } from '@mtti/deps';
 import { Resource } from './resource';
 import { Validator } from './validator';
 import { wrapHandler } from './handler';
@@ -72,7 +71,7 @@ export class ApiServer {
    * @returns A promise resolving to a copy of the `dependencies` argument with
    *   the ApiServer and resource stores added to it.
    */
-  public async initialize(injector: Injector): Promise<void> {
+  public async initialize(): Promise<void> {
     if (this._initialized) {
       throw new Error('Tried to initialize an ApiServer more than once');
     }
@@ -83,7 +82,7 @@ export class ApiServer {
     for (const resource of this._resources) {
       collections.push(resource.slug);
 
-      await resource.initialize(injector);
+      await resource.initialize();
 
       this._validator.addSchema(resource.schemas);
     }

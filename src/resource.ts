@@ -6,7 +6,6 @@ import { ALL_DEFAULT_ACTIONS, RESOURCE_NAME_PATTERN } from './constants';
 import { CollectionAction, getDefaultActionFactories, InstanceAction } from './action';
 import { createJsonApiDocumentRequestSchema, createJsonApiDocumentResponseSchema } from './json-api';
 import { DefaultActionName, JsonSchema } from './types';
-import { DependencyKey, Injector } from '@mtti/deps';
 
 export class InitializedResource<T> {
   private _name: string;
@@ -42,7 +41,7 @@ export class Resource<T = any> {
   private _documentSchemaId: string|null = null;
   private _collectionActions: CollectionAction<T>[] = [];
   private _instanceActions: InstanceAction<T>[] = [];
-  private _storeType?: DependencyKey<Store<T>>;
+  private _store?: Store<T>;
 
   get name(): string {
     return this._name;
@@ -95,7 +94,7 @@ export class Resource<T = any> {
   }
 
   get hasStore(): boolean {
-    return !!this._storeType;
+    return !!this._store;
   }
 
   get initialized(): InitializedResource<T> {
@@ -120,21 +119,16 @@ export class Resource<T = any> {
     }
   }
 
-  async initialize(injector: Injector): Promise<InitializedResource<T>> {
+  async initialize(): Promise<InitializedResource<T>> {
     if (this._initialized) {
       throw new Error(`Resource ${this.name} is already initialized`);
     }
 
     this.withSchemas(...this.generateResponseSchemas());
 
-    let store: Store<T>|null = null;
-    if (this._storeType) {
-      store = await injector.resolve(this._storeType);
-    }
-
     this._initialized = new InitializedResource(
       this._name,
-      store,
+      this._store || null,
     );
 
     return this._initialized;
@@ -151,8 +145,8 @@ export class Resource<T = any> {
     return this;
   }
 
-  withStore(source: DependencyKey<Store<T>>): this {
-    this._storeType = source;
+  withStore(store: Store<T>): this {
+    this._store = store;
     return this;
   }
 
