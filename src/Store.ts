@@ -1,4 +1,4 @@
-import { Document } from './document';
+import { Document } from './Document';
 
 /**
  * Store for accessing documents with the attribute type `T`.

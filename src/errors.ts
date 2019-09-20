@@ -51,6 +51,12 @@ export class ForbiddenError extends ApiError {
   }
 }
 
+export class UnwritableAttributesError extends ForbiddenError {
+  constructor(keys: string[]) {
+    super(`Unwritable attributes: ${keys.join(',')}`);
+  }
+}
+
 export class NotFoundError extends ApiError {
   constructor(message = 'Not Found') {
     super(404, message);
@@ -66,6 +72,12 @@ export class NotAcceptableError extends ApiError {
 export class UnsupportedMediaTypeError extends ApiError {
   constructor(message = 'Unsupported Media Type') {
     super(415, message);
+  }
+}
+
+export class NotImplementedError extends ApiError {
+  constructor(message = 'Not Implemented') {
+    super(501, message);
   }
 }
 

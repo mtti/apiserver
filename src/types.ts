@@ -13,3 +13,5 @@ export type JsonSchema = {
   $id: string;
   [key: string]: unknown;
 }
+
+export type MapFunc<K, V> = (key: K) => V;

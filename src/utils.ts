@@ -1,6 +1,5 @@
 import express = require('express');
 import * as url from 'url';
-import { Dictionary } from './types';
 import { NotAcceptableError } from './errors';
 
 /**
@@ -36,12 +35,12 @@ export function isPromise(value: any): value is Promise<any> {
  *
  * @param entries
  */
-export function fromEntries<T>(entries: [string, T][]): Dictionary<T> {
+export function fromEntries<T>(entries: [string, T][]): Record<string, T> {
   return entries
     .reduce((
       result,
       [key, value]) => ({ ...result, [key]: value}),
-      ({} as Dictionary<T>)
+      ({} as Record<string, T>)
     );
 }
 
