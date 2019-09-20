@@ -1,4 +1,4 @@
-import { MapFunc } from './types';
+import { MapFunc } from '../types';
 
 export interface AccessController<T = unknown> {
   /**
@@ -67,62 +67,4 @@ export interface AccessController<T = unknown> {
     session: T,
     resource: string,
   ): Promise<MapFunc<string, boolean>>;
-}
-
-/**
- * Base implementation of `AccessController` which permits everything.
- */
-export class PermissiveAccessController implements AccessController<unknown> {
-  mightRead(): boolean {
-    return true;
-  }
-
-  mightWrite(): boolean {
-    return true;
-  }
-
-  async mightDoAction(): Promise<boolean> {
-    return true;
-  }
-
-  async canDoCollectionAction(): Promise<boolean> {
-    return true;
-  }
-
-  async getReadableAttributes(): Promise<MapFunc<string, boolean>> {
-    return (): boolean => true;
-  }
-
-  async getWritableAttributes(): Promise<MapFunc<string, boolean>> {
-    return (): boolean => true;
-  }
-}
-
-/**
- * Base implementation of `AccessController` which forbids everything.
- */
-export class RestrictiveAccessController implements AccessController<unknown> {
-  mightRead(): boolean {
-    return false;
-  }
-
-  mightWrite(): boolean {
-    return false;
-  }
-
-  async mightDoAction(): Promise<boolean> {
-    return false;
-  }
-
-  async canDoCollectionAction(): Promise<boolean> {
-    return false;
-  }
-
-  async getReadableAttributes(): Promise<MapFunc<string, boolean>> {
-    return (): boolean => false;
-  }
-
-  async getWritableAttributes(): Promise<MapFunc<string, boolean>> {
-    return (): boolean => false;
-  }
 }

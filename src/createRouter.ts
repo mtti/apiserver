@@ -1,7 +1,7 @@
 import bodyParser from 'body-parser';
 import express from 'express';
 import { wrapHandler } from './handler';
-import { JSON_API_CONTENT_TYPE } from './json-api';
+import { JSON_API_CONTENT_TYPE } from './json-api/json-api';
 import { Validator } from './validator';
 import { NotFoundError } from './errors';
 import { JsonSchema } from './types';
@@ -16,7 +16,7 @@ import { SessionParser } from './SessionParser';
 import { Resource } from './Resource';
 
 const jsonParser = bodyParser.json({
-  type: ['application/json', JSON_API_CONTENT_TYPE]
+  type: ['application/json', JSON_API_CONTENT_TYPE],
 });
 
 export type RouterOptions<T> = {
@@ -36,11 +36,11 @@ export function createRouter<T extends Record<string, unknown>>(
   resource: Resource<T, unknown>,
   options: RouterOptions<T>,
 ): express.Router {
-  const attributeSchemaId = options.schema['$id'];
+  const attributeSchemaId = options.schema.$id;
   const {
     documentRequestSchemaId,
     collectionResponseSchemaId,
-    documentResponseSchemaId
+    documentResponseSchemaId,
   } = generateSchemas(validator, options.slug, attributeSchemaId);
   const { sessionParser } = options;
 
@@ -84,7 +84,7 @@ export function createRouter<T extends Record<string, unknown>>(
     const result = await resource.replace(
       session,
       id.toString(),
-      document.attributes
+      document.attributes,
     );
 
     return emitOne(validator, documentResponseSchemaId, result);

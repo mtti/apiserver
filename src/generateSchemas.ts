@@ -3,7 +3,7 @@ import { Validator } from './validator';
 import {
   createJsonApiDocumentRequestSchema,
   createJsonApiDocumentResponseSchema,
-} from './json-api';
+} from './json-api/json-api';
 
 
 export type GeneratedSchemaIds = {
@@ -23,7 +23,7 @@ export type GeneratedSchemaIds = {
 export function generateSchemas(
   validator: Validator,
   slug: string,
-  attributeSchemaId: string
+  attributeSchemaId: string,
 ): GeneratedSchemaIds {
   const documentRequestSchemaId = suffixUrlFilename(
     attributeSchemaId,
@@ -44,7 +44,7 @@ export function generateSchemas(
     properties: {
       data: createJsonApiDocumentRequestSchema(
         attributeSchemaId,
-        slug
+        slug,
       ),
     },
     required: ['data'],
@@ -58,7 +58,7 @@ export function generateSchemas(
         type: 'array',
         items: createJsonApiDocumentResponseSchema(
           attributeSchemaId,
-          slug
+          slug,
         ),
       },
       meta: {
@@ -70,8 +70,8 @@ export function generateSchemas(
         items: {
           type: 'object',
           additionalProperties: true,
-        }
-      }
+        },
+      },
     },
     required: ['data'],
     additionalProperties: false,
@@ -83,7 +83,7 @@ export function generateSchemas(
     properties: {
       data: createJsonApiDocumentResponseSchema(
         attributeSchemaId,
-        slug
+        slug,
       ),
     },
     required: ['data'],

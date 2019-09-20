@@ -1,6 +1,7 @@
-import express = require('express');
 import * as url from 'url';
 import { NotAcceptableError } from './errors';
+
+import express = require('express');
 
 /**
  * Add a suffix to the filename in an URL.
@@ -15,7 +16,7 @@ export function suffixUrlFilename(original: string, suffix: string): string {
   const fileParts = filename.split('.');
 
   fileParts[0] = `${fileParts[0]}${suffix}`;
-  pathParts[pathParts.length -1] = fileParts.join('.');
+  pathParts[pathParts.length - 1] = fileParts.join('.');
   originalUrl.pathname = pathParts.join('/');
 
   return originalUrl.toString();
@@ -39,9 +40,9 @@ export function fromEntries<T>(entries: [string, T][]): Record<string, T> {
   return entries
     .reduce((
       result,
-      [key, value]) => ({ ...result, [key]: value}),
-      ({} as Record<string, T>)
-    );
+      [key, value],
+    ) => ({ ...result, [key]: value }),
+    ({} as Record<string, T>));
 }
 
 /**
@@ -53,7 +54,7 @@ export function toArray<T>(value: T|T[]): T[] {
   if (Array.isArray(value)) {
     return value;
   }
-  return [ value ];
+  return [value];
 }
 
 /**
@@ -65,7 +66,7 @@ export function toArray<T>(value: T|T[]): T[] {
  */
 export function assertAccepts(
   req: express.Request,
-  contentType: string|string[]
+  contentType: string|string[],
 ): string {
   const contentTypes = toArray(contentType);
   const match = req.accepts(contentTypes);

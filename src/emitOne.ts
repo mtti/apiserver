@@ -1,6 +1,6 @@
 import { Document } from './Document';
 import { Validator } from './validator';
-import { JsonApiResponseEnvelope } from './json-api';
+import { JsonApiResponseEnvelope } from './json-api/json-api';
 
 /**
  * Create a JSON API response containing a single document.
@@ -12,15 +12,15 @@ import { JsonApiResponseEnvelope } from './json-api';
 export function emitOne<T>(
   validator: Validator,
   responseSchemaId: string,
-  document: Document<T>
+  document: Document<T>,
 ): JsonApiResponseEnvelope<T> {
   const response: JsonApiResponseEnvelope<T> = {
     data: {
       id: document.id,
       type: '',
       attributes: document.attributes,
-    }
-  }
+    },
+  };
 
   validator.assertResponse(responseSchemaId, response);
 

@@ -1,6 +1,7 @@
-import Ajv = require('ajv');
 import { all as builtInJsonSchemas } from './json-schemas';
 import { ContractViolationError, RequestBodyValidationError } from './errors';
+
+import Ajv = require('ajv');
 
 /**
  * Wraps Ajv and provides helper functions for doing JSON schema validation.
@@ -62,7 +63,7 @@ export class Validator {
    */
   public validateSchema(
     schema: string,
-    data: any
+    data: any,
   ): [boolean, Ajv.ErrorObject[]|null] {
     if (this._ajv.validate(schema, data)) {
       return [true, null];

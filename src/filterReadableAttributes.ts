@@ -1,4 +1,4 @@
-import { AccessController } from './AccessController';
+import { AccessController } from './access/AccessController';
 import { Document } from './Document';
 import { fromEntries } from './utils';
 
@@ -14,12 +14,12 @@ export async function filterReadableAttributes<T>(
   accessController: AccessController,
   slug: string,
   session: unknown,
-  document: Document<T>
+  document: Document<T>,
 ): Promise<Document<T>> {
   const check = await accessController.getReadableAttributes(session, slug);
 
   const readableAttributes = fromEntries(Object.entries(document.attributes)
-    .filter(([key,]) => check(key)));
+    .filter(([key]) => check(key)));
 
   return { ...document, attributes: readableAttributes as T };
 }

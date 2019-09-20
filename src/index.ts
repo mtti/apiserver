@@ -1,4 +1,4 @@
-export * from './AccessController';
+export * from './access/AccessController';
 export * from './createRouter';
 export * from './Document';
 export * from './DocumentAccessController';

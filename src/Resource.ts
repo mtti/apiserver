@@ -1,4 +1,4 @@
-import { AccessController } from './AccessController';
+import { AccessController } from './access/AccessController';
 import { Document } from './Document';
 import {
   defaultDocumentAccessController,
@@ -22,9 +22,12 @@ export type ResourceOptions<Attrs extends Record<string, unknown>, Sess> = {
 
 export class Resource<Attrs extends Record<string, unknown>, Sess> {
   private _accessController: AccessController<Sess>;
+
   private _documentAccessController: DocumentAccessController<Sess, Attrs>
     = defaultDocumentAccessController;
+
   private _name: string;
+
   private _store: Store<Attrs>;
 
   constructor(
@@ -53,7 +56,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
     session: Sess,
     attributes: Attrs,
   ): Promise<Document<Attrs>> {
-    assertAccess(this._accessController.mightWrite(session, this._name))
+    assertAccess(this._accessController.mightWrite(session, this._name));
     assertAccess(await this._accessController.canDoCollectionAction(
       session,
       'create',
@@ -64,7 +67,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
       this._accessController,
       this._name,
       session,
-      attributes
+      attributes,
     );
 
     assertAccess(await this._documentAccessController(
@@ -81,7 +84,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
       this._accessController,
       this._name,
       session,
-      newDocument
+      newDocument,
     );
   }
 
@@ -93,7 +96,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
    */
   async read(
     session: Sess,
-    id: string
+    id: string,
   ): Promise<Document<Attrs>|null> {
     assertAccess(this._accessController.mightRead(session, this._name));
     assertAccess(await this._accessController.mightDoAction(
@@ -132,9 +135,9 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
   async replace(
     session: Sess,
     id: string,
-    attributes: Attrs
+    attributes: Attrs,
   ): Promise<Document<Attrs>> {
-    assertAccess(this._accessController.mightWrite(session, this._name))
+    assertAccess(this._accessController.mightWrite(session, this._name));
     assertAccess(await this._accessController.mightDoAction(
       session,
       'replace',
@@ -142,11 +145,11 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
     ));
 
     // All new attributes must be writable
-    assertWritableAttributes(
+    await assertWritableAttributes(
       this._accessController,
       this._name,
       session,
-      attributes
+      attributes,
     );
 
     // Load existing document
@@ -157,7 +160,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
 
     // All existing attributes must be writable because any that are not in
     // the new attributes will be deleted.
-    assertWritableAttributes(
+    await assertWritableAttributes(
       this._accessController,
       this._name,
       session,
@@ -192,9 +195,9 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
   async patch(
     session: Sess,
     id: string,
-    attributes: Attrs
+    attributes: Attrs,
   ): Promise<Document<Attrs>> {
-    assertAccess(this._accessController.mightWrite(session, this._name))
+    assertAccess(this._accessController.mightWrite(session, this._name));
     assertAccess(await this._accessController.mightDoAction(
       session,
       'patch',
@@ -202,11 +205,11 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
     ));
 
     // All the fields to change need to be writable by the session
-    assertWritableAttributes(
+    await assertWritableAttributes(
       this._accessController,
       this._name,
       session,
-      attributes
+      attributes,
     );
 
     // Load existing document
@@ -246,7 +249,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
    * @param id
    */
   async destroy(session: Sess, id: string): Promise<void> {
-    assertAccess(this._accessController.mightWrite(session, this._name))
+    assertAccess(this._accessController.mightWrite(session, this._name));
     assertAccess(await this._accessController.mightDoAction(
       session,
       'destroy',
@@ -275,7 +278,7 @@ export class Resource<Attrs extends Record<string, unknown>, Sess> {
    * @param query
    */
   async list(session: Sess, query: any): Promise<Document<Attrs>[]> {
-    assertAccess(this._accessController.mightRead(session, this._name))
+    assertAccess(this._accessController.mightRead(session, this._name));
     assertAccess(await this._accessController.canDoCollectionAction(
       session,
       'list',

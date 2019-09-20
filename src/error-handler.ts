@@ -1,6 +1,10 @@
-import { ApiError, NotFoundError } from './errors';
-import { createJsonApiErrorResponse, JSON_API_CONTENT_TYPE } from './json-api';
 import { Request, Response } from 'express';
+import { ApiError } from './ApiError';
+import { NotFoundError } from './errors';
+import {
+  createJsonApiErrorResponse,
+  JSON_API_CONTENT_TYPE,
+} from './json-api/json-api';
 
 /**
  * An Express error handler that outputs JSON and can handle thrown ApiError
@@ -10,7 +14,7 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: any
+  next: any,
 ): void {
   if (err instanceof ApiError) {
     res

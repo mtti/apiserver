@@ -1,6 +1,6 @@
 import { Document } from './Document';
 import { Validator } from './validator';
-import { JsonApiResponseDocument, JsonApiResponseEnvelope } from './json-api';
+import { JsonApiResponseDocument, JsonApiResponseEnvelope } from './json-api/json-api';
 
 /**
  * Create a JSON API response containing multiple documents.
@@ -12,11 +12,10 @@ import { JsonApiResponseDocument, JsonApiResponseEnvelope } from './json-api';
 export function emitMany<T>(
   validator: Validator,
   responseSchemaId: string,
-  documents: Document<T>[]
+  documents: Document<T>[],
 ): JsonApiResponseEnvelope<T> {
-
   const responseDocuments = documents
-    .map((document): JsonApiResponseDocument<T>  => ({
+    .map((document): JsonApiResponseDocument<T> => ({
       id: document.id,
       attributes: document.attributes,
       type: '',
@@ -24,7 +23,7 @@ export function emitMany<T>(
 
   const response: JsonApiResponseEnvelope<T> = {
     data: responseDocuments,
-  }
+  };
 
   validator.assertResponse(responseSchemaId, response);
 

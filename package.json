@@ -27,6 +27,7 @@
     "uuid": "^3.3.3"
   },
   "devDependencies": {
+    "@mtti/eslint-config-typescript": "mtti/eslint-config-typescript",
     "@types/body-parser": "1.17.1",
     "@types/express": "4.17.1",
     "@types/jest": "24.0.18",
