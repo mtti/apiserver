@@ -1,8 +1,7 @@
 /* eslint-disable max-classes-per-file */
 
+import Ajv from 'ajv';
 import { ApiError } from './ApiError';
-
-import Ajv = require('ajv');
 
 /** Error to throw when a runtime type assertation fails. */
 export class TypeAssertationError extends Error {}

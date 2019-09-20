@@ -1,5 +1,5 @@
-import { AccessController } from './access/AccessController';
-import { UnwritableAttributesError } from './errors';
+import { UnwritableAttributesError } from '../errors';
+import { AccessController } from './AccessController';
 
 /**
  * Throw an `UnwritableAttributesError` if any of the attributes are unwritable

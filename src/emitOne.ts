@@ -1,5 +1,5 @@
 import { Document } from './Document';
-import { Validator } from './validator';
+import { Validator } from './Validator';
 import { JsonApiResponseEnvelope } from './json-api/json-api';
 
 /**

@@ -2,7 +2,7 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import { wrapHandler } from './handler';
 import { JSON_API_CONTENT_TYPE } from './json-api/json-api';
-import { Validator } from './validator';
+import { Validator } from './Validator';
 import { NotFoundError } from './errors';
 import { JsonSchema } from './types';
 import { expectJsonApiRequest } from './expectJsonApiRequest';

@@ -1,7 +1,7 @@
 import express from 'express';
 import { JSON_API_CONTENT_TYPE, JsonApiRequestEnvelope } from './json-api/json-api';
 import { RequestDocument } from './Document';
-import { Validator } from './validator';
+import { Validator } from './Validator';
 import { UnsupportedMediaTypeError } from './errors';
 
 export function expectJsonApiRequest<T>(

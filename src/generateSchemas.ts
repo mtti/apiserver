@@ -1,5 +1,5 @@
 import { suffixUrlFilename } from './utils';
-import { Validator } from './validator';
+import { Validator } from './Validator';
 import {
   createJsonApiDocumentRequestSchema,
   createJsonApiDocumentResponseSchema,

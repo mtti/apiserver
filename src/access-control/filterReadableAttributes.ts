@@ -1,6 +1,6 @@
-import { AccessController } from './access/AccessController';
-import { Document } from './Document';
-import { fromEntries } from './utils';
+import { Document } from '../Document';
+import { fromEntries } from '../utils';
+import { AccessController } from './AccessController';
 
 /**
  * Create a copy of `document` with only the attributes readable by the session.

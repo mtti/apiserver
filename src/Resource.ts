@@ -1,14 +1,14 @@
-import { AccessController } from './access/AccessController';
+import { AccessController } from './access-control/AccessController';
 import { Document } from './Document';
 import {
   defaultDocumentAccessController,
   DocumentAccessController,
-} from './DocumentAccessController';
+} from './access-control/DocumentAccessController';
 import { Store } from './Store';
 import { ForbiddenError, NotFoundError } from './errors';
 import { Uuid } from './uuid';
-import { filterReadableAttributes } from './filterReadableAttributes';
-import { assertWritableAttributes } from './assertWritableAttributes';
+import { filterReadableAttributes } from './access-control/filterReadableAttributes';
+import { assertWritableAttributes } from './access-control/assertWritableAttributes';
 
 function assertAccess(value: boolean): void {
   if (!value) {
