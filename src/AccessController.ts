@@ -45,11 +45,11 @@ export interface AccessController<T = unknown> {
   ): Promise<boolean>;
 
   /**
-   * Get keys of all the attributes a session is authorized to read.
+   * Create a function for checking attribute readability.
    *
    * @param session
    * @param resource
-   * @returns A map of all readable attributes, or `ALL`.
+   * @returns A function which returns readability status for attribute keys.
    */
   getReadableAttributes(
     session: T,
@@ -57,14 +57,72 @@ export interface AccessController<T = unknown> {
   ): Promise<MapFunc<string, boolean>>;
 
   /**
-   * Get keys of all the attributes a session is auhotirzed to write.
+   * Create a function for checking attribute writability.
    *
    * @param sessionZ
    * @param resource
-   * @returns A map of all writable attributes, or `ALL`.
+   * @returns A function which returns writability status for attribute keys.
    */
   getWritableAttributes(
     session: T,
     resource: string,
   ): Promise<MapFunc<string, boolean>>;
+}
+
+/**
+ * Base implementation of `AccessController` which permits everything.
+ */
+export class PermissiveAccessController implements AccessController<unknown> {
+  mightRead(): boolean {
+    return true;
+  }
+
+  mightWrite(): boolean {
+    return true;
+  }
+
+  async mightDoAction(): Promise<boolean> {
+    return true;
+  }
+
+  async canDoCollectionAction(): Promise<boolean> {
+    return true;
+  }
+
+  async getReadableAttributes(): Promise<MapFunc<string, boolean>> {
+    return (): boolean => true;
+  }
+
+  async getWritableAttributes(): Promise<MapFunc<string, boolean>> {
+    return (): boolean => true;
+  }
+}
+
+/**
+ * Base implementation of `AccessController` which forbids everything.
+ */
+export class RestrictiveAccessController implements AccessController<unknown> {
+  mightRead(): boolean {
+    return false;
+  }
+
+  mightWrite(): boolean {
+    return false;
+  }
+
+  async mightDoAction(): Promise<boolean> {
+    return false;
+  }
+
+  async canDoCollectionAction(): Promise<boolean> {
+    return false;
+  }
+
+  async getReadableAttributes(): Promise<MapFunc<string, boolean>> {
+    return (): boolean => false;
+  }
+
+  async getWritableAttributes(): Promise<MapFunc<string, boolean>> {
+    return (): boolean => false;
+  }
 }
