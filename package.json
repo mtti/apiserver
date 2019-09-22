@@ -16,7 +16,7 @@
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "jest": "jest --config ./jest.config.ts.json",
     "tsc": "tsc",
-    "prepare": "npm run build",
+    "prepare": "npm run clean && npm run build",
     "prepublishOnly": "npm run test",
     "clean": "rm -rf ./dist"
   },
