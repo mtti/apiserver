@@ -43,7 +43,7 @@
   },
   "files": [
     "dist",
-    "!dist/*.spec.js",
-    "!dist/*.spec.d.ts"
+    "!dist/**/*.spec.js",
+    "!dist/**/*.spec.d.ts"
   ]
 }
