@@ -1,5 +1,5 @@
+import { fromEntries } from '@mtti/funcs';
 import { Document } from '../Document';
-import { fromEntries } from '../utils';
 import { AccessController } from './AccessController';
 
 /**

@@ -21,6 +21,7 @@
     "clean": "rm -rf ./dist"
   },
   "dependencies": {
+    "@mtti/funcs": "^1.0.0",
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",

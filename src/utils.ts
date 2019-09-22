@@ -1,4 +1,5 @@
 import * as url from 'url';
+import { toArray } from '@mtti/funcs';
 import { NotAcceptableError } from './errors';
 
 import express = require('express');
@@ -29,32 +30,6 @@ export function suffixUrlFilename(original: string, suffix: string): string {
  */
 export function isPromise(value: any): value is Promise<any> {
   return value && (value as Promise<any>).then !== undefined;
-}
-
-/**
- * Construct an object from an array of key-value pairs.
- *
- * @param entries
- */
-export function fromEntries<T>(entries: [string, T][]): Record<string, T> {
-  return entries
-    .reduce((
-      result,
-      [key, value],
-    ) => ({ ...result, [key]: value }),
-    ({} as Record<string, T>));
-}
-
-/**
- * Return `value` if it's an array, or an array with just `value` if it's not.
- *
- * @param value
- */
-export function toArray<T>(value: T|T[]): T[] {
-  if (Array.isArray(value)) {
-    return value;
-  }
-  return [value];
 }
 
 /**
