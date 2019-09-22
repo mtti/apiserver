@@ -1,35 +1,5 @@
 {
     "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
-    ],
-    "env": {
-        "jest": true,
-        "es6": true,
-        "node": true
-    },
-    "parser": "@typescript-eslint/parser",
-    "parserOptions": {
-        "ecmaVersion": 2017,
-        "sourceType": "module"
-    },
-    "plugins": [
-        "@typescript-eslint/eslint-plugin"
-    ],
-    "rules": {
-        "max-len": ["error", {
-            "code": 80,
-            "ignoreTemplateLiterals": true,
-            "ignoreStrings": true,
-            "ignoreRegExpLiterals": true
-        }],
-        "sort-imports": ["error", {
-            "ignoreCase": true,
-            "memberSyntaxSortOrder": ["none", "all", "single", "multiple"]
-        }],
-        "@typescript-eslint/no-explicit-any": 0,
-        "@typescript-eslint/no-unused-vars": ["error", {
-            "args": "none"
-        }]
-    }
+        "@mtti/typescript"
+    ]
 }

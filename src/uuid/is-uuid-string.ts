@@ -13,7 +13,7 @@ export enum UuidVersion {
 /** Checks if a value is a valid string representation of an UUID. */
 export function isUuidString(
   value: any,
-  version: UuidVersion = UuidVersion.Any
+  version: UuidVersion = UuidVersion.Any,
 ): boolean {
   return (
     typeof value === 'string'

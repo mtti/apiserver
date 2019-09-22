@@ -1,46 +1,49 @@
 {
   "name": "@mtti/apiserver",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Microframework for RESTful JSON CRUD APIs",
   "main": "dist/index.js",
-  "private": true,
   "engines": {
     "node": ">=10.15.0"
   },
   "scripts": {
     "setup": "npm install",
-    "build": "npm run clean && tsc",
+    "build": "tsc",
     "test": "npm run lint && npm run jest",
     "test:docker": "docker build -f ./Dockerfile-test -t apiserver-test . && docker run --rm -it apiserver-test",
     "lint": "eslint 'src/**/*.ts'",
     "lint:fix": "eslint --fix 'src/**/*.ts'",
     "jest": "jest --config ./jest.config.ts.json",
     "tsc": "tsc",
-    "prepare": "npm run build",
+    "prepare": "npm run clean && npm run build",
     "prepublishOnly": "npm run test",
     "clean": "rm -rf ./dist"
   },
   "dependencies": {
+    "@mtti/funcs": "^1.0.0",
     "ajv": "^6.10.2",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "uuid": "^3.3.3"
   },
   "devDependencies": {
+    "@mtti/eslint-config-typescript": "^1.0.0",
     "@types/body-parser": "1.17.1",
     "@types/express": "4.17.1",
     "@types/jest": "24.0.18",
     "@types/uuid": "3.4.5",
-    "@typescript-eslint/eslint-plugin": "2.0.0",
-    "@typescript-eslint/parser": "2.0.0",
-    "eslint": "6.2.1",
+    "@typescript-eslint/eslint-plugin": "2.3.0",
+    "@typescript-eslint/parser": "2.3.0",
+    "eslint": "6.4.0",
     "eslint-config-airbnb-base": "14.0.0",
     "eslint-plugin-import": "2.18.2",
     "jest": "24.9.0",
-    "ts-jest": "24.0.2",
-    "typescript": "3.5.3"
+    "ts-jest": "24.1.0",
+    "typescript": "3.6.3"
   },
   "files": [
-    "dist"
+    "dist",
+    "!dist/**/*.spec.js",
+    "!dist/**/*.spec.d.ts"
   ]
 }

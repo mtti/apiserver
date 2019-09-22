@@ -1,5 +1,6 @@
-import { ApiError } from './errors';
-import { RequestDocument } from './document';
+import { ApiError } from '../ApiError';
+import { RequestDocument } from '../Document';
+import { JsonApiError, JsonApiMeta } from './types';
 
 export const JSON_API_CONTENT_TYPE = 'application/vnd.api+json';
 
@@ -24,27 +25,8 @@ export type JsonApiResponseDocument<T> = {
   attributes: T;
 };
 
-/**
- * Error objects provide additional information about problems encountered while
- * performing an operation.
- */
-export type JsonApiError = {
-  id?: string;
-  links?: any;
-  status?: string;
-  code?: string;
-  title?: string;
-  detail?: string;
-  source?: any;
-  meta?: JsonApiMeta;
-};
-
-export type JsonApiMeta = {
-  [key: string]: any;
-};
-
 export function createJsonApiErrorResponse(
-  original: Error
+  original: Error,
 ): JsonApiErrorResponse {
   if (original instanceof ApiError) {
     return {
@@ -55,7 +37,7 @@ export function createJsonApiErrorResponse(
   // Convert misc errors to generic internal server errors
   const result: JsonApiError = {
     title: 'Internal Server Error',
-    code: '500'
+    code: '500',
   };
 
   if (process.env.NODE_ENV !== 'production') {
@@ -65,7 +47,7 @@ export function createJsonApiErrorResponse(
     };
   }
   return {
-    errors: [ result ],
+    errors: [result],
   };
 }
 
@@ -77,7 +59,7 @@ export function createJsonApiErrorResponse(
  */
 export function createJsonApiDocumentResponseSchema(
   attributesSchemaId: string,
-  slug: string
+  slug: string,
 ): object {
   return {
     type: 'object',
@@ -104,7 +86,7 @@ export function createJsonApiDocumentResponseSchema(
  */
 export function createJsonApiDocumentRequestSchema(
   attributesSchemaId: string,
-  slug: string
+  slug: string,
 ): object {
   return {
     type: 'object',

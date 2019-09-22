@@ -10,7 +10,7 @@ import { UuidVersion } from './is-uuid-string';
  */
 export function assertUuid(
   value: any,
-  version: UuidVersion = UuidVersion.Any
+  version: UuidVersion = UuidVersion.Any,
 ): Uuid {
   try {
     return new Uuid(value, version);

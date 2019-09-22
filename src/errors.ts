@@ -1,43 +1,10 @@
-import Ajv = require('ajv');
-import { JsonApiError } from './json-api';
+/* eslint-disable max-classes-per-file */
+
+import Ajv from 'ajv';
+import { ApiError } from './ApiError';
 
 /** Error to throw when a runtime type assertation fails. */
-export class TypeAssertationError extends Error {
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-/**
- * Base class for all apiserver errors.
- */
-export class ApiError extends Error {
-  private _status: number;
-
-  public get status(): number {
-    return this._status;
-  }
-
-  constructor(status: number, message: string) {
-    super(message);
-    this._status = status;
-  }
-
-  public toJsonApi(): JsonApiError[] {
-    const result: JsonApiError = {
-      status: this._status.toString(),
-      title: this.message,
-    };
-
-    if (process.env.NODE_ENV !== 'production') {
-      result.meta = {
-        stack: this.stack,
-      };
-    }
-
-    return [ result ];
-  }
-}
+export class TypeAssertationError extends Error {}
 
 export class BadRequestError extends ApiError {
   constructor(message = 'Bad Request') {
@@ -46,8 +13,14 @@ export class BadRequestError extends ApiError {
 }
 
 export class ForbiddenError extends ApiError {
-  constructor(message = "Forbidden") {
+  constructor(message = 'Forbidden') {
     super(403, message);
+  }
+}
+
+export class UnwritableAttributesError extends ForbiddenError {
+  constructor(keys: string[]) {
+    super(`Unwritable attributes: ${keys.join(',')}`);
   }
 }
 
@@ -69,6 +42,12 @@ export class UnsupportedMediaTypeError extends ApiError {
   }
 }
 
+export class NotImplementedError extends ApiError {
+  constructor(message = 'Not Implemented') {
+    super(501, message);
+  }
+}
+
 /** Base class for JSON schema violations. */
 export class JSONSchemaViolationError extends ApiError {
   private _errors: Ajv.ErrorObject[];
@@ -76,7 +55,7 @@ export class JSONSchemaViolationError extends ApiError {
   constructor(
     errors: Ajv.ErrorObject[],
     status = 500,
-    message = 'JSON Schema Violation'
+    message = 'JSON Schema Violation',
   ) {
     super(status, message);
     this._errors = [...errors];
@@ -84,7 +63,7 @@ export class JSONSchemaViolationError extends ApiError {
 
   get errors(): Ajv.ErrorObject[] {
     if (this._errors) {
-      return [ ...this._errors ];
+      return [...this._errors];
     }
     return [];
   }
