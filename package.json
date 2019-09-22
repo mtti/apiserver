@@ -1,6 +1,6 @@
 {
   "name": "@mtti/apiserver",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Microframework for RESTful JSON CRUD APIs",
   "main": "dist/index.js",
   "private": true,
@@ -9,7 +9,7 @@
   },
   "scripts": {
     "setup": "npm install",
-    "build": "npm run clean && tsc",
+    "build": "tsc",
     "test": "npm run lint && npm run jest",
     "test:docker": "docker build -f ./Dockerfile-test -t apiserver-test . && docker run --rm -it apiserver-test",
     "lint": "eslint 'src/**/*.ts'",
