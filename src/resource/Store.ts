@@ -1,6 +1,6 @@
 import { FullDocument } from './FullDocument';
 
-export interface Store<T = Record<string, unknown>> {
+export type Store<T = Record<string, unknown>> = {
   /**
    * Create a new object.
    */
