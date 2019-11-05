@@ -4,7 +4,6 @@
 export type AuthorizeCollectionActionFunc<S> = (
   session: S,
   action: string,
-  slug: string,
 ) => Promise<boolean>;
 
 /**
@@ -15,7 +14,6 @@ export const restrictiveAuthorizeCollectionAction:
   AuthorizeCollectionActionFunc<any> = async (
     session: any,
     action: string,
-    slug: string,
   ) => false;
 
 /**
@@ -26,5 +24,4 @@ export const permissiveAuthorizeCollectionAction:
   AuthorizeCollectionActionFunc<any> = async (
     session: any,
     action: string,
-    slug: string,
   ) => true;

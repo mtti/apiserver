@@ -1,3 +1,6 @@
+/**
+ * Function for filtering attribute keys.
+ */
 export type AttributeFilterFunc<S> = (session: S, key: string) => boolean;
 
 export const permissiveAttributeFilter: AttributeFilterFunc<any>

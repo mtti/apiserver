@@ -1,14 +1,13 @@
+import {
+  AccessController,
+  createAccessController,
+} from '../access-control/AccessController';
 import { assertAccess } from '../access-control/assertAccess';
-import { assertAllAttributesAllowed }
-  from '../access-control/assertAllAttributesAllowed';
-import { AttributeFilterFunc, permissiveAttributeFilter }
-  from '../access-control/AttributeFilterFunc';
-import { AuthorizeCollectionActionFunc, restrictiveAuthorizeCollectionAction }
-  from '../access-control/AuthorizeCollectionActionFunc';
-import { AuthorizeDocumentActionFunc, restrictiveAuthorizeDocumentAction }
-  from '../access-control/AuthorizeDocumentActionFunc';
+import {
+  assertAllAttributesAllowed,
+} from '../access-control/assertAllAttributesAllowed';
 import { NotFoundError } from '../errors/NotFoundError';
-import { FullDocument } from './FullDocument';
+import { Document } from './Document';
 import { ResourceOptions } from './ResourceOptions';
 import { Store } from './Store';
 
@@ -19,56 +18,39 @@ import { Store } from './Store';
  * the type of the session object used to authorize operations on the resource.
  */
 export class Resource<A extends Record<string, unknown>, S = unknown> {
-  private _slug: string;
-
   private _store: Store<A>;
 
-  private _authorizeCollectionAction: AuthorizeCollectionActionFunc<S>;
-
-  private _authorizeDocumentAction: AuthorizeDocumentActionFunc<A, S>;
-
-  private _filterReadableAttributes: AttributeFilterFunc<S>;
-
-  private _filterWritableAttributes: AttributeFilterFunc<S>;
+  private _accessController: AccessController<A, S>;
 
   constructor(options: ResourceOptions<A, S>) {
-    this._slug = options.slug;
     this._store = options.store;
-
-    this._authorizeCollectionAction = options.authorizeCollectionAction ||
-      restrictiveAuthorizeCollectionAction;
-    this._authorizeDocumentAction = options.authorizeDocumentAction ||
-      restrictiveAuthorizeDocumentAction;
-    this._filterReadableAttributes = options.filterReadableAttributes ||
-      permissiveAttributeFilter;
-    this._filterWritableAttributes = options.filterWritableAttributes ||
-      permissiveAttributeFilter;
+    this._accessController = createAccessController(
+      options.accessController || {},
+    );
   }
 
   async create(
     session: S,
     id: string,
     attributes: A,
-  ): Promise<FullDocument<A>> {
+  ): Promise<Document<A>> {
     // Check that the session is allowed to create documents in this collection
-    assertAccess(await this._authorizeCollectionAction(
+    assertAccess(await this._accessController.authorizeCollectionAction(
       session,
       'create',
-      this._slug,
     ));
 
     // Check that all attributes are writable
     assertAllAttributesAllowed(
       session,
       attributes,
-      this._filterWritableAttributes,
+      this._accessController.filterWritableAttributes,
     );
 
     // Check that the session is allowed to create this particular document
-    assertAccess(await this._authorizeDocumentAction(
+    assertAccess(await this._accessController.authorizeDocumentAction(
       session,
       'create',
-      this._slug,
       attributes,
     ));
 
@@ -82,16 +64,15 @@ export class Resource<A extends Record<string, unknown>, S = unknown> {
   async read(
     session: S,
     id: string,
-  ): Promise<FullDocument<A>|null> {
+  ): Promise<Document<A>|null> {
     const document = await this._store.read(id);
     if (!document) {
       throw new NotFoundError();
     }
 
-    assertAccess(await this._authorizeDocumentAction(
+    assertAccess(await this._accessController.authorizeDocumentAction(
       session,
       'read',
-      this._slug,
       null,
       document.attributes,
     ));
@@ -105,12 +86,12 @@ export class Resource<A extends Record<string, unknown>, S = unknown> {
     session: S,
     id: string,
     attributes: A,
-  ): Promise<FullDocument<A>> {
+  ): Promise<Document<A>> {
     // Check that all attributes are writable
     assertAllAttributesAllowed(
       session,
       attributes,
-      this._filterWritableAttributes,
+      this._accessController.filterWritableAttributes,
     );
 
     const existing = await this._store.read(id);
@@ -118,10 +99,9 @@ export class Resource<A extends Record<string, unknown>, S = unknown> {
       throw new NotFoundError();
     }
 
-    assertAccess(await this._authorizeDocumentAction(
+    assertAccess(await this._accessController.authorizeDocumentAction(
       session,
       'replace',
-      this._slug,
       attributes,
       existing.attributes,
     ));
@@ -142,10 +122,9 @@ export class Resource<A extends Record<string, unknown>, S = unknown> {
       return;
     }
 
-    assertAccess(await this._authorizeDocumentAction(
+    assertAccess(await this._accessController.authorizeDocumentAction(
       session,
       'destroy',
-      this._slug,
       null,
       existing.attributes,
     ));
